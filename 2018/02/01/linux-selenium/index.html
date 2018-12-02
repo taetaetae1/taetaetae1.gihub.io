@@ -1,0 +1,610 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>linux(centOS)에서 selenium 설정하기 (feat. python) - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 Regression Test. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 selenium 에 대해서 알아보고자 한다.\n처음부터 사실 web application 테스트를 하려고 selenium 를 알아보게 된건 아니고, 내가 참여하고 있는 특정 밴드(네이버 BAND)에서 일주일에 한번씩 동일한 형태의 글을 올리고 있는데 (일종의 한주 출석체크 같은…) 이를 자동화 해볼순 없을까 하며 밴드 API를 찾아보다 selenium 라는것을 알게되었고, 매크로처럼 어떤버튼 누르고 그다음 어떤버튼 누르고 하는 일련의 과정을 코드로 구성할수 있다는 점에 감동을 받아(?) + 별도의 API를 발급받지 않아도 되어 사용하게 되었다. (물론 UI가 바뀌면 골치아프겠지만…)\n\n여기서는 selenium 이 무엇인지에 대한 설명은 하지 않는다. (인터넷에 나보다 정리 잘된글이 많으니…) 단, linux 환경에서 셋팅하는 정보가 너무 없고 몇일동안 삽질을 한게 아쉬워서 그 과정을 포스팅 해본다. (나같은 분이 이 글을 보고 도움이 되실꺼라는 기대를 갖으며…)\n\n\n※ 주의 : 본 포스팅은 밴드 서비스에 글을 올릴수 있는 비 정상적인 방법의 공유가 아닌, selenium에 대한 사용 후기(?)에 대한 글입니다. (참고로 막혔어요 -ㅁ-)\n\n설정하기서버 환경은 CentOS 7.4 64Bit + Python 3.6.3 + jdk 8 이다. 우선 selenium 을 설치해준다.1$ sudo python3.6 -m pip install selenium\n그 다음 CentOS에서 크롬브라우저를 설치하기 위하여 yum 저장소를 추가한다. (꼭 크롬이 아니더라도 파이어폭스나 지금은 지원이 끊긴 팬텀JS 같은것으로 활용할수도 있으나 다른것들도 해봤는데 자꾸 설정에서 걸려서 크롬에 대한 내용을 포스팅 한다.)1234567$ sudo vi /etc/yum.repos.d/google-chrome.repo[google-chrome]name=google-chromebaseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64enabled=1gpgcheck=1gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub\n그리고는 yum 으로 크롬 브라우저를 설치한다. (내가 설치했을때의 버전은 google-chrome-stable.x86_64 0:64.0.3282.119-1)1$ yum install google-chrome-stable\n크롬드라이버를 설치해야한다. 다음 url에서 받을수 있는데 https://sites.google.com/a/chromium.org/chromedriver/downloads 나는 2.35 linux64 버전을 받았다. 다운받고 unzip 하면 딱하나 파일이 있는데 나중에 selenium 을 사용할때 이용되니 path를 알아두자.\n그다음 파이썬 코드를 작성한다. 내가 짠 파이썬 코드는 다음과 같은 순서로 실행이 된다.\n\n밴드 접속 ( https://band.us/home )\n로그인\n특정 밴드 선택\n글쓰기 버튼 누르고 양식에 맞춰 글 작성\n글 등록\n\n파이썬 코드는 아래처럼 작성하였다. (중요부분만.. 그 아래는 자유)1234567891011121314from selenium import webdriverfrom selenium.webdriver.chrome.options import Options# 초기화 --------------------------------------------chrome_options = Options()chrome_options.add_argument(\"--headless\")driver  = webdriver.Chrome(executable_path='home/~~~/chromedriver', chrome_options=chrome_options)driver.implicitly_wait(3)driver.get('https://band.us/home')# 로그인 --------------------------------------------driver.find_element_by_class_name('_loginLink').click()...생략\n그리고 실행을 해보면 작동이 잘~ 된다.selenium + python 으로 자동작성된 밴드 글selenium + python 으로 자동작성된 밴드 글\n마치며selenium 에 대해 찾아보면 거의 윈도우 환경에서 돌아가는것들에 대한 포스팅이 많았다. 난 리눅스 환경에서 스케쥴러(젠킨스 같은)를 통해 자동으로 화면없이 작동시키고 싶었는데 아무리 찾아봐도 + 삽질해도 잘 안되었다. 결국 사내에도 나같은 삽질을 하신 분을 찾고 묻고 물어 크롬드라이버만 있어야 하는것이 아니라 크롬앱또한 있어야 동작을 한다는것을 알게 되었다.역시, 내가 한 삽질은 누군가 이미 한 삽질이라는걸 다시한번 깨닳은 좋은(?) 시간이였다.\n이걸로 나중에 내가 맡고있는 서비스에 대한 웹 자동 테스트 툴도 만들어 볼 생각이다.\n","dateCreated":"2018-02-01T14:52:10+09:00","dateModified":"2018-07-29T17:31:26+09:00","datePublished":"2018-02-01T14:52:10+09:00","description":"테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 Regression Test. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 selenium 에 대해서 알아보고자 한다.","headline":"linux(centOS)에서 selenium 설정하기 (feat. python)","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2018/02/01/linux-selenium/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2018/02/01/linux-selenium/","keywords":"python, linux, selenium, chromedriver"}</script>
+    <meta name="description" content="테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 Regression Test. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 selenium 에 대해서 알아보고자 한다.">
+<meta name="keywords" content="python,linux,selenium,chromedriver">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="linux(centOS)에서 selenium 설정하기 (feat. python)">
+<meta property="og:url" content="https://taetaetae.github.io/2018/02/01/linux-selenium/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 Regression Test. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 selenium 에 대해서 알아보고자 한다.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-07-29T08:31:26.226Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="linux(centOS)에서 selenium 설정하기 (feat. python)">
+<meta name="twitter:description" content="테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 Regression Test. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 selenium 에 대해서 알아보고자 한다.">
+<meta name="twitter:image" content="https://taetaetae.github.io/2018/02/01/linux-selenium/result.png">
+    
+    
+        
+    
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            linux(centOS)에서 selenium 설정하기 (feat. python)
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-02-01T14:52:10+09:00">
+	
+		    Feb 01, 2018
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 <code>Regression Test</code>. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 <code>selenium</code> 에 대해서 알아보고자 한다.<a id="more"></a></p>
+<p>처음부터 사실 web application 테스트를 하려고 selenium 를 알아보게 된건 아니고, 내가 참여하고 있는 특정 밴드(네이버 BAND)에서 일주일에 한번씩 동일한 형태의 글을 올리고 있는데 (일종의 한주 출석체크 같은…) 이를 자동화 해볼순 없을까 하며 밴드 API를 찾아보다 selenium 라는것을 알게되었고, 매크로처럼 어떤버튼 누르고 그다음 어떤버튼 누르고 하는 일련의 과정을 코드로 구성할수 있다는 점에 감동을 받아(?) + 별도의 API를 발급받지 않아도 되어 사용하게 되었다. (물론 UI가 바뀌면 골치아프겠지만…)</p>
+<blockquote>
+<p>여기서는 selenium 이 무엇인지에 대한 설명은 하지 않는다. (인터넷에 나보다 정리 잘된글이 많으니…) 단, linux 환경에서 셋팅하는 정보가 너무 없고 몇일동안 삽질을 한게 아쉬워서 그 과정을 포스팅 해본다. (나같은 분이 이 글을 보고 도움이 되실꺼라는 기대를 갖으며…)</p>
+</blockquote>
+<blockquote>
+<p>※ 주의 : 본 포스팅은 밴드 서비스에 글을 올릴수 있는 비 정상적인 방법의 공유가 아닌, selenium에 대한 사용 후기(?)에 대한 글입니다. (참고로 막혔어요 -ㅁ-)</p>
+</blockquote>
+<h3 id="설정하기"><a href="#설정하기" class="headerlink" title="설정하기"></a>설정하기</h3><p>서버 환경은 CentOS 7.4 64Bit + Python 3.6.3 + jdk 8 이다. 우선 selenium 을 설치해준다.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo python3.6 -m pip install selenium</span><br></pre></td></tr></table></figure></p>
+<p>그 다음 CentOS에서 크롬브라우저를 설치하기 위하여 yum 저장소를 추가한다. (꼭 크롬이 아니더라도 파이어폭스나 지금은 지원이 끊긴 팬텀JS 같은것으로 활용할수도 있으나 다른것들도 해봤는데 자꾸 설정에서 걸려서 크롬에 대한 내용을 포스팅 한다.)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ sudo vi /etc/yum.repos.d/google-chrome.repo</span><br><span class="line">[google-chrome]</span><br><span class="line">name=google-chrome</span><br><span class="line">baseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=1</span><br><span class="line">gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub</span><br></pre></td></tr></table></figure></p>
+<p>그리고는 yum 으로 크롬 브라우저를 설치한다. (내가 설치했을때의 버전은 <code>google-chrome-stable.x86_64 0:64.0.3282.119-1</code>)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ yum install google-chrome-stable</span><br></pre></td></tr></table></figure></p>
+<p>크롬드라이버를 설치해야한다. 다음 url에서 받을수 있는데 <a href="https://sites.google.com/a/chromium.org/chromedriver/downloads" target="_blank" rel="noopener">https://sites.google.com/a/chromium.org/chromedriver/downloads</a> 나는 2.35 linux64 버전을 받았다. 다운받고 unzip 하면 딱하나 파일이 있는데 나중에 selenium 을 사용할때 이용되니 path를 알아두자.</p>
+<p>그다음 파이썬 코드를 작성한다. 내가 짠 파이썬 코드는 다음과 같은 순서로 실행이 된다.</p>
+<ul>
+<li>밴드 접속 ( <a href="https://band.us/home" target="_blank" rel="noopener">https://band.us/home</a> )</li>
+<li>로그인</li>
+<li>특정 밴드 선택</li>
+<li>글쓰기 버튼 누르고 양식에 맞춰 글 작성</li>
+<li>글 등록</li>
+</ul>
+<p>파이썬 코드는 아래처럼 작성하였다. (중요부분만.. 그 아래는 자유)<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> selenium <span class="keyword">import</span> webdriver</span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.chrome.options <span class="keyword">import</span> Options</span><br><span class="line"></span><br><span class="line"><span class="comment"># 초기화 --------------------------------------------</span></span><br><span class="line">chrome_options = Options()</span><br><span class="line">chrome_options.add_argument(<span class="string">"--headless"</span>)</span><br><span class="line"></span><br><span class="line">driver  = webdriver.Chrome(executable_path=<span class="string">'home/~~~/chromedriver'</span>, chrome_options=chrome_options)</span><br><span class="line">driver.implicitly_wait(<span class="number">3</span>)</span><br><span class="line">driver.get(<span class="string">'https://band.us/home'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 로그인 --------------------------------------------</span></span><br><span class="line">driver.find_element_by_class_name(<span class="string">'_loginLink'</span>).click()</span><br><span class="line">...생략</span><br></pre></td></tr></table></figure></p>
+<p>그리고 실행을 해보면 작동이 잘~ 된다.<br><div class="figure center" style="width:;"><img class="fig-img" src="result.png" alt="selenium + python 으로 자동작성된 밴드 글"><span class="image-caption">selenium + python 으로 자동작성된 밴드 글</span><span class="caption">selenium + python 으로 자동작성된 밴드 글</span></div></p>
+<h3 id="마치며"><a href="#마치며" class="headerlink" title="마치며"></a>마치며</h3><p><code>selenium</code> 에 대해 찾아보면 거의 윈도우 환경에서 돌아가는것들에 대한 포스팅이 많았다. 난 리눅스 환경에서 스케쥴러(젠킨스 같은)를 통해 자동으로 화면없이 작동시키고 싶었는데 아무리 찾아봐도 + 삽질해도 잘 안되었다. 결국 사내에도 나같은 삽질을 하신 분을 찾고 묻고 물어 <code>크롬드라이버</code>만 있어야 하는것이 아니라 <code>크롬앱</code>또한 있어야 동작을 한다는것을 알게 되었다.<br><strong>역시, 내가 한 삽질은 누군가 이미 한 삽질이라는걸 다시한번 깨닳은 좋은(?) 시간이였다.</strong></p>
+<p>이걸로 나중에 내가 맡고있는 서비스에 대한 웹 자동 테스트 툴도 만들어 볼 생각이다.</p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/chromedriver/">chromedriver</a> <a class="tag tag--primary tag--small t-link" href="/tags/linux/">linux</a> <a class="tag tag--primary tag--small t-link" href="/tags/python/">python</a> <a class="tag tag--primary tag--small t-link" href="/tags/selenium/">selenium</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/02/08/github-with-jenkins/" data-tooltip="Github과 Jenkins 연동하기" aria-label="PREVIOUS: Github과 Jenkins 연동하기">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/01/25/apache-access-log-to-es/" data-tooltip="아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자." aria-label="NEXT: 아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자.">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/02/01/linux-selenium/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/02/01/linux-selenium/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/02/01/linux-selenium/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/02/08/github-with-jenkins/" data-tooltip="Github과 Jenkins 연동하기" aria-label="PREVIOUS: Github과 Jenkins 연동하기">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/01/25/apache-access-log-to-es/" data-tooltip="아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자." aria-label="NEXT: 아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자.">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/02/01/linux-selenium/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/02/01/linux-selenium/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/02/01/linux-selenium/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/02/01/linux-selenium/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/02/01/linux-selenium/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/02/01/linux-selenium/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2018/02/01/linux-selenium/';
+                 
+                    this.page.identifier = '2018/02/01/linux-selenium/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>

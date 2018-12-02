@@ -1,0 +1,627 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>What is Kafka? - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"필자가 맡고있는 서비스에 Elastic Stack 을 도입하면서 중간에 버퍼가 필요하여 Message-Queue 시스템들을 알아보던 중 Kafka 에 대해 알아보고, 정리를 해보게 된다.\n\n# 기본설명 및 기존 메세징 시스템과 다른점\n메세징 큐의 일종\n말 그대로 분산형 스트리밍 플랫폼, LinkedIn에서 여러 구직 + 채용 정보들을 한곳에서 처리(발행/구독)할수 있는 플랫폼으로 개발이 시작\n대용량의 실시간 로그 처리에 특화되어 설계된 메시징 시스템, 기존 범용 메시징 시스템대비 TPS가 매우 우수\n메시지를 기본적으로 메모리에 저장하는 기존 메시징 시스템과는 달리 메시지를 파일 시스템에 저장 → 카프카 재시작으로 인한 메세지 유실 우려 감소\n기존의 메시징 시스템에서는 broker가 consumer에게 메시지를 push해 주는 방식인데 반해, Kafka는 consumer가 broker로부터 직접 메시지를 가지고 가는 pull 방식으로 동작하기 때문에 consumer는 자신의 처리능력만큼의 메시지만 broker로부터 가져오기 때문에 최적의 성능을 낼 수 있다.\n\n# 카프카 주요 개념\nproducer : 메세지 생산(발행)자. \nconsumer : 메세지 소비자\nconsumer group : consumer 들끼리 메세지를 나눠서 가져간다.offset 을 공유하여 중복으로 가져가지 않는다.\n\n\nbroker : 카프카 서버를 가리킴\nzookeeper : 카프카 서버 (+클러스터) 상태를 관리하고 \ncluster : 브로커들의 묶음\ntopic : 메세지 종류\npartitions : topic 이 나눠지는 단위\nLog : 1개의 메세지\noffset : 파티션 내에서 각 메시지가 가지는 unique id\n\n# 카프카는 어떤식으로 돌아가는가\nzookeeper 가 kafka 의 상태와 클러스터 관리를 해준다.\n정해진 topic 에 producer 가 메세지를 발행해놓으면 consumer 가 필요할때 해당 메세지를 가져간다. (여기서 카프카로 발행된 메세지들은 consumer가 메세지를 소비한다고 해서 없어지는게 아니라 카프카 설정log.retention.hours(default : 168[7일])에  의해 삭제된다.)\npartition 개수와 consumer group 개념\n하얀색(consumer-01) : 파티션 개수가 4개인데 비해 컨슈머가 3개, 이렇게 되면 어느 컨슈머가 두개의 파티션을 담당해야하는 상황이 생긴다.\n주황색(consumer-02) : 파티션 개수가 4개인데 비해 컨슈머가 5개, 이렇게 되면 하나의 노는(?) 컨슈머가 생기는 상황이 생긴다.\n가장 적절한 개수는 정해지지 않았지만 통상 컨슈머그룹의 컨슈머 개수와 파티션 개수를 동일하게 가져가곤 한다.\n\n\n\n# 참고 url\nhttp://kafka.apache.org/\nhttp://www.popit.kr/author/peter5236/\nhttp://jinhokwon.tistory.com/168\nhttp://programist.tistory.com/entry/Apache-Kafka-클러스터링-구축-및-테스트\nhttps://www.elastic.co/kr/blog/just-enough-kafka-for-the-elastic-stack-part1\nhttps://www.slideshare.net/springloops/apache-kafka-intro20150313springloops-46067669\n\n","dateCreated":"2017-11-02T21:30:13+09:00","dateModified":"2018-07-29T23:52:11+09:00","datePublished":"2017-11-02T21:30:13+09:00","description":"필자가 맡고있는 서비스에 Elastic Stack 을 도입하면서 중간에 버퍼가 필요하여 Message-Queue 시스템들을 알아보던 중 Kafka 에 대해 알아보고, 정리를 해보게 된다.","headline":"What is Kafka?","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/11/02/what-is-kafka/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2017/11/02/what-is-kafka/","keywords":"kafka"}</script>
+    <meta name="description" content="필자가 맡고있는 서비스에 Elastic Stack 을 도입하면서 중간에 버퍼가 필요하여 Message-Queue 시스템들을 알아보던 중 Kafka 에 대해 알아보고, 정리를 해보게 된다.">
+<meta name="keywords" content="kafka">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="What is Kafka?">
+<meta property="og:url" content="https://taetaetae.github.io/2017/11/02/what-is-kafka/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="필자가 맡고있는 서비스에 Elastic Stack 을 도입하면서 중간에 버퍼가 필요하여 Message-Queue 시스템들을 알아보던 중 Kafka 에 대해 알아보고, 정리를 해보게 된다.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-07-29T14:52:11.484Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="What is Kafka?">
+<meta name="twitter:description" content="필자가 맡고있는 서비스에 Elastic Stack 을 도입하면서 중간에 버퍼가 필요하여 Message-Queue 시스템들을 알아보던 중 Kafka 에 대해 알아보고, 정리를 해보게 된다.">
+<meta name="twitter:image" content="https://taetaetae.github.io/2017/11/02/what-is-kafka/kafka.png">
+    
+    
+        
+    
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            What is Kafka?
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-11-02T21:30:13+09:00">
+	
+		    Nov 02, 2017
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>필자가 맡고있는 서비스에 Elastic Stack 을 도입하면서 중간에 버퍼가 필요하여 Message-Queue 시스템들을 알아보던 중 Kafka 에 대해 알아보고, 정리를 해보게 된다.<a id="more"></a></p>
+<p><img src="kafka.png" alt=""></p>
+<h3 id="기본설명-및-기존-메세징-시스템과-다른점"><a href="#기본설명-및-기존-메세징-시스템과-다른점" class="headerlink" title="# 기본설명 및 기존 메세징 시스템과 다른점"></a># 기본설명 및 기존 메세징 시스템과 다른점</h3><ul>
+<li>메세징 큐의 일종</li>
+<li>말 그대로 <code>분산형 스트리밍 플랫폼</code>, LinkedIn에서 여러 구직 + 채용 정보들을 한곳에서 처리(발행/구독)할수 있는 플랫폼으로 개발이 시작</li>
+<li>대용량의 실시간 로그 처리에 특화되어 설계된 메시징 시스템, 기존 범용 메시징 시스템대비 TPS가 매우 우수</li>
+<li>메시지를 기본적으로 메모리에 저장하는 기존 메시징 시스템과는 달리 메시지를 파일 시스템에 저장 → 카프카 재시작으로 인한 메세지 유실 우려 감소</li>
+<li>기존의 메시징 시스템에서는 broker가 consumer에게 메시지를 push해 주는 방식인데 반해, Kafka는 consumer가 broker로부터 직접 메시지를 가지고 가는 pull 방식으로 동작하기 때문에 consumer는 자신의 처리능력만큼의 메시지만 broker로부터 가져오기 때문에 최적의 성능을 낼 수 있다.<br><img src="kafka2.png" alt=""></li>
+</ul>
+<h3 id="카프카-주요-개념"><a href="#카프카-주요-개념" class="headerlink" title="# 카프카 주요 개념"></a># 카프카 주요 개념</h3><ul>
+<li>producer : 메세지 생산(발행)자. </li>
+<li>consumer : 메세지 소비자<ul>
+<li>consumer group : consumer 들끼리 메세지를 나눠서 가져간다.offset 을 공유하여 중복으로 가져가지 않는다.</li>
+</ul>
+</li>
+<li>broker : 카프카 서버를 가리킴</li>
+<li>zookeeper : 카프카 서버 (+클러스터) 상태를 관리하고 </li>
+<li>cluster : 브로커들의 묶음</li>
+<li>topic : 메세지 종류</li>
+<li>partitions : topic 이 나눠지는 단위</li>
+<li>Log : 1개의 메세지</li>
+<li>offset : 파티션 내에서 각 메시지가 가지는 unique id</li>
+</ul>
+<h3 id="카프카는-어떤식으로-돌아가는가"><a href="#카프카는-어떤식으로-돌아가는가" class="headerlink" title="# 카프카는 어떤식으로 돌아가는가"></a># 카프카는 어떤식으로 돌아가는가</h3><ul>
+<li>zookeeper 가 kafka 의 상태와 클러스터 관리를 해준다.<br><img src="kafka3.png" alt=""></li>
+<li>정해진 topic 에 producer 가 메세지를 발행해놓으면 consumer 가 필요할때 해당 메세지를 가져간다. (여기서 카프카로 발행된 메세지들은 consumer가 메세지를 소비한다고 해서 없어지는게 아니라 카프카 설정<code>log.retention.hours(default : 168[7일])</code>에  의해 삭제된다.)<br><img src="kafka4.png" alt=""></li>
+<li>partition 개수와 consumer group 개념<br><img src="kafka5.png" alt=""><ul>
+<li>하얀색(consumer-01) : 파티션 개수가 4개인데 비해 컨슈머가 3개, 이렇게 되면 어느 컨슈머가 두개의 파티션을 담당해야하는 상황이 생긴다.</li>
+<li>주황색(consumer-02) : 파티션 개수가 4개인데 비해 컨슈머가 5개, 이렇게 되면 하나의 노는(?) 컨슈머가 생기는 상황이 생긴다.</li>
+<li>가장 적절한 개수는 정해지지 않았지만 통상 컨슈머그룹의 컨슈머 개수와 파티션 개수를 동일하게 가져가곤 한다.</li>
+</ul>
+</li>
+</ul>
+<h4 id="참고-url"><a href="#참고-url" class="headerlink" title="# 참고 url"></a># 참고 url</h4><ul>
+<li><a href="http://kafka.apache.org/" target="_blank" rel="noopener">http://kafka.apache.org/</a></li>
+<li><a href="http://www.popit.kr/author/peter5236/" target="_blank" rel="noopener">http://www.popit.kr/author/peter5236/</a></li>
+<li><a href="http://jinhokwon.tistory.com/168" target="_blank" rel="noopener">http://jinhokwon.tistory.com/168</a></li>
+<li><a href="http://programist.tistory.com/entry/Apache-Kafka-클러스터링-구축-및-테스트" target="_blank" rel="noopener">http://programist.tistory.com/entry/Apache-Kafka-클러스터링-구축-및-테스트</a></li>
+<li><a href="https://www.elastic.co/kr/blog/just-enough-kafka-for-the-elastic-stack-part1" target="_blank" rel="noopener">https://www.elastic.co/kr/blog/just-enough-kafka-for-the-elastic-stack-part1</a></li>
+<li><a href="https://www.slideshare.net/springloops/apache-kafka-intro20150313springloops-46067669" target="_blank" rel="noopener">https://www.slideshare.net/springloops/apache-kafka-intro20150313springloops-46067669</a></li>
+</ul>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/kafka/">kafka</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/12/14/elastic-on-tour/" data-tooltip="Elastic{ON}Tour" aria-label="PREVIOUS: Elastic{ON}Tour">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/10/16/deview-2017-review/" data-tooltip="Deview-2017 Day1 리뷰" aria-label="NEXT: Deview-2017 Day1 리뷰">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2017/11/02/what-is-kafka/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2017/11/02/what-is-kafka/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2017/11/02/what-is-kafka/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/12/14/elastic-on-tour/" data-tooltip="Elastic{ON}Tour" aria-label="PREVIOUS: Elastic{ON}Tour">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/10/16/deview-2017-review/" data-tooltip="Deview-2017 Day1 리뷰" aria-label="NEXT: Deview-2017 Day1 리뷰">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2017/11/02/what-is-kafka/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2017/11/02/what-is-kafka/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2017/11/02/what-is-kafka/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2017/11/02/what-is-kafka/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2017/11/02/what-is-kafka/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2017/11/02/what-is-kafka/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2017/11/02/what-is-kafka/';
+                 
+                    this.page.identifier = '2017/11/02/what-is-kafka/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>

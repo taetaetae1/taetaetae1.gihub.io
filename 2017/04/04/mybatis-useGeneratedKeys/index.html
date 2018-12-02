@@ -1,0 +1,603 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>mybatis insert/update 쿼리실행후 결과 가져오기 - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html\n# useGeneratedKeys, keyProperty 옵션사용하는 데이터베이스가 자동생성키를 지원한다면(mySql 같은) 해당옵션을 이용해 결과를 리턴 받을수 있다.예로들어 파라미터로 아래 모델객체를 넘긴다고 가정하고123456public Student &#123;  int id;  String name;  String email;  Date regist_date;&#125;\n아래 mybatis 구문으로 insert를 시도하게되면, 파라미터로 넘긴 Student 객체의 id값에 insert 했을때의 key값(id)이 들어오게 된다.123456Student student = new Student();student.setName('bla');student.setEmail('bla@naver.com');mapper.insertStudents(student); // 쿼리실행student.getId(); // 추출 가능\n1234&lt;insert id=\"insertStudents\" useGeneratedKeys=\"true\" keyProperty=\"id\" parameterType=\"Student\"&gt;  insert into Students ( name, email )  values ( #&#123;name&#125;, #&#123;email&#125; )&lt;/insert&gt;\n# selectKey 옵션Oracle 같은 경우는 Auto Increment 가 없고 Sequence를 사용해야만 하기 때문에 위 옵션을 사용할수가 없다. 하지만 다른 우회적인(?) 방법으로 위와같은 효과를 볼수가 있다.파라미터의 모델이나 java구문은 위와 동일하고 xml 쿼리 부분만 아래와 같이 설정해주면 된다.123456789&lt;insert id=\"insertStudents\" parameterType=\"Student\"&gt;  &lt;selectKey keyProperty=\"id\" resultType=\"int\" order=\"BEFORE\"&gt;    select SEQ_ID.nexyval FROM DUAL  &lt;/selectKey&gt;  insert into Students    (id, name , email)  values    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;)&lt;/insert&gt;\n위와같은 코드에서 쿼리가 실행되기 전에 id값에 Sequence에 의해 값을 셋팅하게 되고, 자동적으로 해당 값을 Student의 id에 set하게 되서 동일한 결과를 볼수가 있다.\n항상 테이블의 key값에만 해당하는것이 아니다. key값과는 전혀 상관없는 값도 selectKey 구문으로 리턴할수가 있는데 order옵션을 AFTER로 주고 리턴하고자 하는 값을 명시해주면 된다.아래 코드에서는 입력할시 id값을 Sequence에서 가져오는게 아니라 수동으로 넣어주고, 입력했던 id에 맞는 regist_date 값을 리턴받아 위에서처럼 동일하게 값를 가져올수 있다.123456789&lt;insert id=\"insertStudents\" parameterType=\"Student\"&gt;  &lt;selectKey keyProperty=\"regist_date\" resultType=\"java.util.Date\" order=\"AFTER\"&gt;    select regist_date FROM students WHERE id = #&#123;id&#125;  &lt;/selectKey&gt;  insert into Students    (id, name , email, regist_date)  values    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;, syadate)&lt;/insert&gt;\n","dateCreated":"2017-04-04T11:41:28+09:00","dateModified":"2018-07-29T17:31:26+09:00","datePublished":"2017-04-04T11:41:28+09:00","description":"Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html","headline":"mybatis insert/update 쿼리실행후 결과 가져오기","image":[null,"mybatis.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/","keywords":"mybatis, oracle","thumbnailUrl":"mybatis.png"}</script>
+    <meta name="description" content="Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html">
+<meta name="keywords" content="mybatis,oracle">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="mybatis insert&#x2F;update 쿼리실행후 결과 가져오기">
+<meta property="og:url" content="https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-07-29T08:31:26.238Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="mybatis insert&#x2F;update 쿼리실행후 결과 가져오기">
+<meta name="twitter:description" content="Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html">
+    
+    
+        
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/mybatis.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/mybatis.png" />
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('/2017/04/04/mybatis-useGeneratedKeys/mybatis.png');"
+             data-behavior="5">
+            
+                <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            mybatis insert/update 쿼리실행후 결과 가져오기
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-04-04T11:41:28+09:00">
+	
+		    Apr 04, 2017
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+            
+        </div>
+
+            <div id="main" data-behavior="5"
+                 class="hasCover
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p><code>Select</code>문이 아닌 다른 <code>SQL Query</code>(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.<br>※ 참고 url : <a href="http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html" target="_blank" rel="noopener">http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html</a><br><a id="more"></a></p>
+<h4 id="useGeneratedKeys-keyProperty-옵션"><a href="#useGeneratedKeys-keyProperty-옵션" class="headerlink" title="# useGeneratedKeys, keyProperty 옵션"></a># useGeneratedKeys, keyProperty 옵션</h4><p>사용하는 데이터베이스가 자동생성키를 지원한다면(mySql 같은) 해당옵션을 이용해 결과를 리턴 받을수 있다.<br>예로들어 파라미터로 아래 모델객체를 넘긴다고 가정하고<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Student &#123;</span><br><span class="line">  <span class="keyword">int</span> id;</span><br><span class="line">  String name;</span><br><span class="line">  String email;</span><br><span class="line">  Date regist_date;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>아래 mybatis 구문으로 insert를 시도하게되면, 파라미터로 넘긴 Student 객체의 id값에 insert 했을때의 key값(id)이 들어오게 된다.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Student student = <span class="keyword">new</span> Student();</span><br><span class="line">student.setName(<span class="string">'bla'</span>);</span><br><span class="line">student.setEmail(<span class="string">'bla@naver.com'</span>);</span><br><span class="line"></span><br><span class="line">mapper.insertStudents(student); <span class="comment">// 쿼리실행</span></span><br><span class="line">student.getId(); <span class="comment">// 추출 가능</span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">insert</span> <span class="attr">id</span>=<span class="string">"insertStudents"</span> <span class="attr">useGeneratedKeys</span>=<span class="string">"true"</span> <span class="attr">keyProperty</span>=<span class="string">"id"</span> <span class="attr">parameterType</span>=<span class="string">"Student"</span>&gt;</span></span><br><span class="line">  insert into Students ( name, email )</span><br><span class="line">  values ( #&#123;name&#125;, #&#123;email&#125; )</span><br><span class="line"><span class="tag">&lt;/<span class="name">insert</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="selectKey-옵션"><a href="#selectKey-옵션" class="headerlink" title="# selectKey 옵션"></a># selectKey 옵션</h4><p>Oracle 같은 경우는 Auto Increment 가 없고 Sequence를 사용해야만 하기 때문에 위 옵션을 사용할수가 없다. 하지만 다른 우회적인(?) 방법으로 위와같은 효과를 볼수가 있다.<br>파라미터의 모델이나 java구문은 위와 동일하고 xml 쿼리 부분만 아래와 같이 설정해주면 된다.<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">insert</span> <span class="attr">id</span>=<span class="string">"insertStudents"</span> <span class="attr">parameterType</span>=<span class="string">"Student"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">selectKey</span> <span class="attr">keyProperty</span>=<span class="string">"id"</span> <span class="attr">resultType</span>=<span class="string">"int"</span> <span class="attr">order</span>=<span class="string">"BEFORE"</span>&gt;</span></span><br><span class="line">    select SEQ_ID.nexyval FROM DUAL</span><br><span class="line">  <span class="tag">&lt;/<span class="name">selectKey</span>&gt;</span></span><br><span class="line">  insert into Students</span><br><span class="line">    (id, name , email)</span><br><span class="line">  values</span><br><span class="line">    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;)</span><br><span class="line"><span class="tag">&lt;/<span class="name">insert</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>위와같은 코드에서 쿼리가 실행되기 전에 id값에 Sequence에 의해 값을 셋팅하게 되고, 자동적으로 해당 값을 Student의 id에 set하게 되서 동일한 결과를 볼수가 있다.</p>
+<p>항상 테이블의 key값에만 해당하는것이 아니다. key값과는 전혀 상관없는 값도 <code>selectKey</code> 구문으로 리턴할수가 있는데 <code>order</code>옵션을 <code>AFTER</code>로 주고 리턴하고자 하는 값을 명시해주면 된다.<br>아래 코드에서는 입력할시 id값을 Sequence에서 가져오는게 아니라 수동으로 넣어주고, 입력했던 id에 맞는 regist_date 값을 리턴받아 위에서처럼 동일하게 값를 가져올수 있다.<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">insert</span> <span class="attr">id</span>=<span class="string">"insertStudents"</span> <span class="attr">parameterType</span>=<span class="string">"Student"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">selectKey</span> <span class="attr">keyProperty</span>=<span class="string">"regist_date"</span> <span class="attr">resultType</span>=<span class="string">"java.util.Date"</span> <span class="attr">order</span>=<span class="string">"AFTER"</span>&gt;</span></span><br><span class="line">    select regist_date FROM students WHERE id = #&#123;id&#125;</span><br><span class="line">  <span class="tag">&lt;/<span class="name">selectKey</span>&gt;</span></span><br><span class="line">  insert into Students</span><br><span class="line">    (id, name , email, regist_date)</span><br><span class="line">  values</span><br><span class="line">    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;, syadate)</span><br><span class="line"><span class="tag">&lt;/<span class="name">insert</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/mybatis/">mybatis</a> <a class="tag tag--primary tag--small t-link" href="/tags/oracle/">oracle</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/07/09/refresh/" data-tooltip="다시 시작하자" aria-label="PREVIOUS: 다시 시작하자">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/03/23/oracle-mybatis-date/" data-tooltip="Oracle + Mybatis 환경에서의 Date 다루기" aria-label="NEXT: Oracle + Mybatis 환경에서의 Date 다루기">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/07/09/refresh/" data-tooltip="다시 시작하자" aria-label="PREVIOUS: 다시 시작하자">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/03/23/oracle-mybatis-date/" data-tooltip="Oracle + Mybatis 환경에서의 Date 다루기" aria-label="NEXT: Oracle + Mybatis 환경에서의 Date 다루기">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/';
+                 
+                    this.page.identifier = '2017/04/04/mybatis-useGeneratedKeys/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>

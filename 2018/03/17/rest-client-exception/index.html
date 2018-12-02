@@ -1,0 +1,599 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>RestClientException 처리 - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"Spring 환경에서 (Spring5는 달라졌지만…) 외부 API로의 호출을 할때 자주 쓰이는 RestTemplate. 이때 request에 대해 정상적인 응답이 아닌 경우에 대한 처리는 어떻게 할까? 막연하게 생각을 해보면 Http Status Code를 받아서 판별을 하면 되지만 Http Status Code만 봐도 엄청~많다.  ( 위키피디아 참고 : https://en.wikipedia.org/wiki/List_of_HTTP_status_codes )if~else 로 다 나눌수도 없고… 우선 성공/실패에 대한 판별은 어떻게 할까 하고 코드를 파고파고 들어가다가 알게된 부분에 대해 정리를 해보겠다.\n# Http Status Code 그룹정의Spring-project github에 가보면 HttpStatus 하위에 내부 Enum으로 아래처럼 정의되어 있다. ( 링크 )12345678910111213141516171819202122232425262728293031public enum HttpStatus &#123;\t\t...\tpublic Series series() &#123;\t\treturn Series.valueOf(this);\t&#125;\t...\tpublic enum Series &#123;\t\tINFORMATIONAL(1),\t\tSUCCESSFUL(2),\t\tREDIRECTION(3),\t\tCLIENT_ERROR(4),\t\tSERVER_ERROR(5);\t\t...\t\tpublic static Series valueOf(int status) &#123;\t\t\tint seriesCode = status / 100;\t\t\tfor (Series series : values()) &#123;\t\t\t\tif (series.value == seriesCode) &#123;\t\t\t\t\treturn series;\t\t\t\t&#125;\t\t\t&#125;\t\t\tthrow new IllegalArgumentException(\"No matching constant for [\" + status + \"]\");\t\t&#125;\t&#125;&#125;\n약 80여개 응답코드들을 크게 5개 묶음으로 정의해 놓은것을 볼수있다. 즉, 201 / 201 / 202 같은 녀석들은 전부 SUCCESSFUL 성공 으로 그룹핑이 되는것을 확인할수 있다.\n# 그럼 RestTemplate 에서는 어떻게 처리하고 있나?코드를 쭉쭉 따라가다 보면 아래처럼 4xx, 5xx 는 에러라고 판단하고 그에 따라 RestClientException 을 반환하는것을 확인할수 있다. \n\nRestTemplate 호출 링크\n123456789101112131415try &#123;\tClientHttpRequest request = createRequest(url, method);\tif (requestCallback != null) &#123;\t\trequestCallback.doWithRequest(request);\t&#125;\tresponse = request.execute();\thandleResponse(url, method, response);\tif (responseExtractor != null) &#123;\t\treturn responseExtractor.extractData(response);\t&#125;\telse &#123;\t\treturn null;\t&#125;&#125;catch (IOException ex) &#123;\n\n에러 판별 링크\n123protected boolean hasError(HttpStatus statusCode) &#123;\treturn (statusCode.series() == HttpStatus.Series.CLIENT_ERROR || statusCode.series() == HttpStatus.Series.SERVER_ERROR);&#125;\n\n\n# 성공/실패 처리는 어떻게 할것인가각자 정의하기 나름일것 같다. 우선 아주 간단하게 RestTemplate 를 사용할때 예외처리를 하여 정의된 대로 4xx, 5xx가 에러라고 판단할 수 있을것 같고12345try &#123;    responseBody = restTemplate.postForObject(url, httpEntity, byte[].class);&#125; catch (RestClientException e) &#123; // 에러인 경우 RestClientException 을 내뱉는다.    log.error(\"##### restTemplate error, url = &#123;&#125;\", url, e);&#125;\n정의된 에러(?)와는 조금 다르게 처리하고 싶다면 DefaultResponseErrorHandler을 상속받고 hasError메소드를 무조건 패스하도록 Override 하고난 다음 응답 코드를 받아서 처리하는 방법이 있을수 있겠다.(물론 이러한 방법 말고 다양한 방법이 있을것 같다.)\n","dateCreated":"2018-03-17T19:19:39+09:00","dateModified":"2018-07-29T17:31:26+09:00","datePublished":"2018-03-17T19:19:39+09:00","description":"Spring 환경에서 (Spring5는 달라졌지만…) 외부 API로의 호출을 할때 자주 쓰이는 RestTemplate. 이때 request에 대해 정상적인 응답이 아닌 경우에 대한 처리는 어떻게 할까? 막연하게 생각을 해보면 Http Status Code를 받아서 판별을 하면 되지만 Http Status Code만 봐도 엄청~많다.","headline":"RestClientException 처리","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2018/03/17/rest-client-exception/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2018/03/17/rest-client-exception/","keywords":"RestTemplate, RestClientException"}</script>
+    <meta name="description" content="Spring 환경에서 (Spring5는 달라졌지만…) 외부 API로의 호출을 할때 자주 쓰이는 RestTemplate. 이때 request에 대해 정상적인 응답이 아닌 경우에 대한 처리는 어떻게 할까? 막연하게 생각을 해보면 Http Status Code를 받아서 판별을 하면 되지만 Http Status Code만 봐도 엄청~많다.">
+<meta name="keywords" content="RestTemplate,RestClientException">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="RestClientException 처리">
+<meta property="og:url" content="https://taetaetae.github.io/2018/03/17/rest-client-exception/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="Spring 환경에서 (Spring5는 달라졌지만…) 외부 API로의 호출을 할때 자주 쓰이는 RestTemplate. 이때 request에 대해 정상적인 응답이 아닌 경우에 대한 처리는 어떻게 할까? 막연하게 생각을 해보면 Http Status Code를 받아서 판별을 하면 되지만 Http Status Code만 봐도 엄청~많다.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-07-29T08:31:26.431Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RestClientException 처리">
+<meta name="twitter:description" content="Spring 환경에서 (Spring5는 달라졌지만…) 외부 API로의 호출을 할때 자주 쓰이는 RestTemplate. 이때 request에 대해 정상적인 응답이 아닌 경우에 대한 처리는 어떻게 할까? 막연하게 생각을 해보면 Http Status Code를 받아서 판별을 하면 되지만 Http Status Code만 봐도 엄청~많다.">
+    
+    
+        
+    
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            RestClientException 처리
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-03-17T19:19:39+09:00">
+	
+		    Mar 17, 2018
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>Spring 환경에서 (Spring5는 달라졌지만…) 외부 API로의 호출을 할때 자주 쓰이는 RestTemplate. 이때 request에 대해 정상적인 응답이 아닌 경우에 대한 처리는 어떻게 할까? 막연하게 생각을 해보면 Http Status Code를 받아서 판별을 하면 되지만 Http Status Code만 봐도 엄청~많다. <a id="more"></a> ( 위키피디아 참고 : <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/List_of_HTTP_status_codes</a> )<br>if~else 로 다 나눌수도 없고… 우선 성공/실패에 대한 판별은 어떻게 할까 하고 코드를 파고파고 들어가다가 알게된 부분에 대해 정리를 해보겠다.</p>
+<h4 id="Http-Status-Code-그룹정의"><a href="#Http-Status-Code-그룹정의" class="headerlink" title="# Http Status Code 그룹정의"></a># Http Status Code 그룹정의</h4><p>Spring-project github에 가보면 HttpStatus 하위에 내부 Enum으로 아래처럼 정의되어 있다. ( <a href="https://github.com/spring-projects/spring-framework/blob/4.3.x/spring-web/src/main/java/org/springframework/http/HttpStatus.java#L505" target="_blank" rel="noopener">링크</a> )<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> HttpStatus &#123;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Series <span class="title">series</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> Series.valueOf(<span class="keyword">this</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">enum</span> Series &#123;</span><br><span class="line"></span><br><span class="line">		INFORMATIONAL(<span class="number">1</span>),</span><br><span class="line">		SUCCESSFUL(<span class="number">2</span>),</span><br><span class="line">		REDIRECTION(<span class="number">3</span>),</span><br><span class="line">		CLIENT_ERROR(<span class="number">4</span>),</span><br><span class="line">		SERVER_ERROR(<span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">		...</span><br><span class="line"></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Series <span class="title">valueOf</span><span class="params">(<span class="keyword">int</span> status)</span> </span>&#123;</span><br><span class="line">			<span class="keyword">int</span> seriesCode = status / <span class="number">100</span>;</span><br><span class="line">			<span class="keyword">for</span> (Series series : values()) &#123;</span><br><span class="line">				<span class="keyword">if</span> (series.value == seriesCode) &#123;</span><br><span class="line">					<span class="keyword">return</span> series;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"No matching constant for ["</span> + status + <span class="string">"]"</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>약 80여개 응답코드들을 크게 5개 묶음으로 정의해 놓은것을 볼수있다. 즉, 201 / 201 / 202 같은 녀석들은 전부 <code>SUCCESSFUL</code> 성공 으로 그룹핑이 되는것을 확인할수 있다.</p>
+<h4 id="그럼-RestTemplate-에서는-어떻게-처리하고-있나"><a href="#그럼-RestTemplate-에서는-어떻게-처리하고-있나" class="headerlink" title="# 그럼 RestTemplate 에서는 어떻게 처리하고 있나?"></a># 그럼 RestTemplate 에서는 어떻게 처리하고 있나?</h4><p>코드를 쭉쭉 따라가다 보면 아래처럼 4xx, 5xx 는 에러라고 판단하고 그에 따라 RestClientException 을 반환하는것을 확인할수 있다. </p>
+<ul>
+<li><p>RestTemplate 호출 <a href="https://github.com/spring-projects/spring-framework/blob/4.3.x/spring-web/src/main/java/org/springframework/web/client/RestTemplate.java#L649" target="_blank" rel="noopener">링크</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">	ClientHttpRequest request = createRequest(url, method);</span><br><span class="line">	<span class="keyword">if</span> (requestCallback != <span class="keyword">null</span>) &#123;</span><br><span class="line">		requestCallback.doWithRequest(request);</span><br><span class="line">	&#125;</span><br><span class="line">	response = request.execute();</span><br><span class="line">	handleResponse(url, method, response);</span><br><span class="line">	<span class="keyword">if</span> (responseExtractor != <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> responseExtractor.extractData(response);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span> (IOException ex) &#123;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>에러 판별 <a href="https://github.com/spring-projects/spring-framework/blob/4.3.x/spring-web/src/main/java/org/springframework/web/client/DefaultResponseErrorHandler.java" target="_blank" rel="noopener">링크</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">hasError</span><span class="params">(HttpStatus statusCode)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> (statusCode.series() == HttpStatus.Series.CLIENT_ERROR || statusCode.series() == HttpStatus.Series.SERVER_ERROR);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="성공-실패-처리는-어떻게-할것인가"><a href="#성공-실패-처리는-어떻게-할것인가" class="headerlink" title="# 성공/실패 처리는 어떻게 할것인가"></a># 성공/실패 처리는 어떻게 할것인가</h4><p>각자 정의하기 나름일것 같다. 우선 아주 간단하게 RestTemplate 를 사용할때 예외처리를 하여 정의된 대로 4xx, 5xx가 에러라고 판단할 수 있을것 같고<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    responseBody = restTemplate.postForObject(url, httpEntity, <span class="keyword">byte</span>[].class);</span><br><span class="line">&#125; <span class="keyword">catch</span> (RestClientException e) &#123; <span class="comment">// 에러인 경우 RestClientException 을 내뱉는다.</span></span><br><span class="line">    log.error(<span class="string">"##### restTemplate error, url = &#123;&#125;"</span>, url, e);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>정의된 에러(?)와는 조금 다르게 처리하고 싶다면 <code>DefaultResponseErrorHandler</code>을 상속받고 <code>hasError</code>메소드를 무조건 패스하도록 Override 하고난 다음 응답 코드를 받아서 처리하는 방법이 있을수 있겠다.<br>(물론 이러한 방법 말고 다양한 방법이 있을것 같다.)</p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/RestClientException/">RestClientException</a> <a class="tag tag--primary tag--small t-link" href="/tags/RestTemplate/">RestTemplate</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/04/01/apache-gzip/" data-tooltip="gzip 설정으로 속도를 더 빠르게!" aria-label="PREVIOUS: gzip 설정으로 속도를 더 빠르게!">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/02/08/jenkins-sonar-github-integration/" data-tooltip="소나큐브 이용 코드 정적분석 자동화" aria-label="NEXT: 소나큐브 이용 코드 정적분석 자동화">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/03/17/rest-client-exception/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/03/17/rest-client-exception/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/03/17/rest-client-exception/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/04/01/apache-gzip/" data-tooltip="gzip 설정으로 속도를 더 빠르게!" aria-label="PREVIOUS: gzip 설정으로 속도를 더 빠르게!">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/02/08/jenkins-sonar-github-integration/" data-tooltip="소나큐브 이용 코드 정적분석 자동화" aria-label="NEXT: 소나큐브 이용 코드 정적분석 자동화">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/03/17/rest-client-exception/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/03/17/rest-client-exception/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/03/17/rest-client-exception/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/03/17/rest-client-exception/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/03/17/rest-client-exception/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/03/17/rest-client-exception/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2018/03/17/rest-client-exception/';
+                 
+                    this.page.identifier = '2018/03/17/rest-client-exception/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>

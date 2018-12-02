@@ -1,0 +1,621 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>파이썬 버전 업그레이드 (2.6 &gt; 3.6) - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"파이썬 2.x 에서는 depreate 된 모듈도 많고 3.x에서만 지원되는 버전들이 많아지면서 실컷 개발을 해도 파이썬 버전때문에 다시 짜야하는 상황이 생긴다. 파이썬 버전업을 하고싶어 구글링을 해보면 이렇다할 정리된 문서가 잘 안나온다. (영어로된 포스트는 많이 있긴 하나, 필자의 환경과는 맞지 않는 …) 그래서 이것저것 삽질을 한 결과 파이썬 버전을 올릴수 있었고, 이를 포스팅 해보고자 한다.\n\n그러보고니 2018년 첫 포스팅이네… 올해는 정말 적어도 한달에 1~2개는 올릴수 있는 내가 되기를…\n\n# 환경\nCentOS 6.9\n기본으로 python 2.6 이 설치되어 있는것을 확인할수 있다. (환경마다 다를수 있음.)12$ python -VPython 2.6\n\n\n# 설치순서\n필요한 유틸리티를 설치한다.\n123$ sudo yum update$ sudo yum install yum-utils$ sudo yum groupinstall development\n\nyum 저장소에서는 최신 파이썬 릴리즈를 제공하지 않으므로 RPM 패키를 제공하는 IUM 이라는 추가 저장소를 설치\n1$ sudo yum install https://centos6.iuscommunity.org/ius-release.rpm\n\n파이썬 3.6 버전을 설치\n1$ sudo yum install python36u\n\npip 등 패키지 관련 모듈도 함께 설치\n12sudo yum install python36u-pipsudo yum install python36u-devel\n\n여기까지 하면 기존 파이썬 2.6과 새로 설치된 파이썬 3.6 이 설치되어있다.\n1234567891011$ ll /usr/bin/python*-rwxr-xr-x 1 root root 9997450 Jan  2 16:02 pythonlrwxrwxrwx 1 root root       6 Jan  1 06:02 python2 -&gt; python-rwxr-xr-x 1 root root    9032 Aug 19  2016 python2.6-rwxr-xr-x 1 root root    1418 Aug 19  2016 python2.6-config-rwxr-xr-x 2 root root    6808 Oct 12 08:19 python3.6lrwxrwxrwx 1 root root      26 Jan  2 20:48 python3.6-config -&gt; /usr/bin/python3.6m-config-rwxr-xr-x 2 root root    6808 Oct 12 08:19 python3.6m-rwxr-xr-x 1 root root     173 Oct 12 08:19 python3.6m-config-rwxr-xr-x 1 root root    3339 Oct 12 08:16 python3.6m-x86_64-configlrwxrwxrwx 1 root root      16 Apr 25  2017 python-config -&gt; python2.6-config\n\n환경변수를 설정해준다.\n12$ sudo mv python python_backup$ sudo ln -s python3.6 python\n\n확인\n12$ python -VPython 3.6.3\n\n\n# pip 를 이용한 모듈 설치\npip란 Python Package Index 의 약자로 공식홈페이지는 다음과 같다. ( https://pypi.python.org/pypi/pip )\n설치할 모듈을 다음과 같이 설치해주면 된다. ex : requests 모듈인 경우1$ sudo python3.6 -m pip install requests\n\n","dateCreated":"2018-01-08T13:44:50+09:00","dateModified":"2018-07-29T17:31:26+09:00","datePublished":"2018-01-08T13:44:50+09:00","description":"파이썬 2.x 에서는 depreate 된 모듈도 많고 3.x에서만 지원되는 버전들이 많아지면서 실컷 개발을 해도 파이썬 버전때문에 다시 짜야하는 상황이 생긴다. 파이썬 버전업을 하고싶어 구글링을 해보면 이렇다할 정리된 문서가 잘 안나온다. (영어로된 포스트는 많이 있긴 하나, 필자의 환경과는 맞지 않는 …)","headline":"파이썬 버전 업그레이드 (2.6 > 3.6)","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2018/01/08/python-2-to-3/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2018/01/08/python-2-to-3/","keywords":"python"}</script>
+    <meta name="description" content="파이썬 2.x 에서는 depreate 된 모듈도 많고 3.x에서만 지원되는 버전들이 많아지면서 실컷 개발을 해도 파이썬 버전때문에 다시 짜야하는 상황이 생긴다. 파이썬 버전업을 하고싶어 구글링을 해보면 이렇다할 정리된 문서가 잘 안나온다. (영어로된 포스트는 많이 있긴 하나, 필자의 환경과는 맞지 않는 …)">
+<meta name="keywords" content="python">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="파이썬 버전 업그레이드 (2.6 &gt; 3.6)">
+<meta property="og:url" content="https://taetaetae.github.io/2018/01/08/python-2-to-3/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="파이썬 2.x 에서는 depreate 된 모듈도 많고 3.x에서만 지원되는 버전들이 많아지면서 실컷 개발을 해도 파이썬 버전때문에 다시 짜야하는 상황이 생긴다. 파이썬 버전업을 하고싶어 구글링을 해보면 이렇다할 정리된 문서가 잘 안나온다. (영어로된 포스트는 많이 있긴 하나, 필자의 환경과는 맞지 않는 …)">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-07-29T08:31:26.428Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="파이썬 버전 업그레이드 (2.6 &gt; 3.6)">
+<meta name="twitter:description" content="파이썬 2.x 에서는 depreate 된 모듈도 많고 3.x에서만 지원되는 버전들이 많아지면서 실컷 개발을 해도 파이썬 버전때문에 다시 짜야하는 상황이 생긴다. 파이썬 버전업을 하고싶어 구글링을 해보면 이렇다할 정리된 문서가 잘 안나온다. (영어로된 포스트는 많이 있긴 하나, 필자의 환경과는 맞지 않는 …)">
+    
+    
+        
+    
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            파이썬 버전 업그레이드 (2.6 &gt; 3.6)
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-01-08T13:44:50+09:00">
+	
+		    Jan 08, 2018
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>파이썬 2.x 에서는 depreate 된 모듈도 많고 3.x에서만 지원되는 버전들이 많아지면서 실컷 개발을 해도 파이썬 버전때문에 다시 짜야하는 상황이 생긴다. 파이썬 버전업을 하고싶어 구글링을 해보면 이렇다할 정리된 문서가 잘 안나온다. (영어로된 포스트는 많이 있긴 하나, 필자의 환경과는 맞지 않는 …)<a id="more"></a> 그래서 이것저것 삽질을 한 결과 파이썬 버전을 올릴수 있었고, 이를 포스팅 해보고자 한다.</p>
+<blockquote>
+<p>그러보고니 2018년 첫 포스팅이네… 올해는 정말 적어도 한달에 1~2개는 올릴수 있는 내가 되기를…</p>
+</blockquote>
+<h3 id="환경"><a href="#환경" class="headerlink" title="# 환경"></a># 환경</h3><ul>
+<li>CentOS 6.9</li>
+<li>기본으로 python 2.6 이 설치되어 있는것을 확인할수 있다. (환경마다 다를수 있음.)<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ python -V</span><br><span class="line">Python 2.6</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="설치순서"><a href="#설치순서" class="headerlink" title="# 설치순서"></a># 설치순서</h3><ul>
+<li><p>필요한 유틸리티를 설치한다.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ sudo yum update</span><br><span class="line">$ sudo yum install yum-utils</span><br><span class="line">$ sudo yum groupinstall development</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>yum 저장소에서는 최신 파이썬 릴리즈를 제공하지 않으므로 RPM 패키를 제공하는 IUM 이라는 추가 저장소를 설치</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo yum install https://centos6.iuscommunity.org/ius-release.rpm</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>파이썬 3.6 버전을 설치</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo yum install python36u</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>pip 등 패키지 관련 모듈도 함께 설치</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install python36u-pip</span><br><span class="line">sudo yum install python36u-devel</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>여기까지 하면 기존 파이썬 <code>2.6</code>과 새로 설치된 파이썬 <code>3.6</code> 이 설치되어있다.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ ll /usr/bin/python*</span><br><span class="line">-rwxr-xr-x 1 root root 9997450 Jan  2 16:02 python</span><br><span class="line">lrwxrwxrwx 1 root root       6 Jan  1 06:02 python2 -&gt; python</span><br><span class="line">-rwxr-xr-x 1 root root    9032 Aug 19  2016 python2.6</span><br><span class="line">-rwxr-xr-x 1 root root    1418 Aug 19  2016 python2.6-config</span><br><span class="line">-rwxr-xr-x 2 root root    6808 Oct 12 08:19 python3.6</span><br><span class="line">lrwxrwxrwx 1 root root      26 Jan  2 20:48 python3.6-config -&gt; /usr/bin/python3.6m-config</span><br><span class="line">-rwxr-xr-x 2 root root    6808 Oct 12 08:19 python3.6m</span><br><span class="line">-rwxr-xr-x 1 root root     173 Oct 12 08:19 python3.6m-config</span><br><span class="line">-rwxr-xr-x 1 root root    3339 Oct 12 08:16 python3.6m-x86_64-config</span><br><span class="line">lrwxrwxrwx 1 root root      16 Apr 25  2017 python-config -&gt; python2.6-config</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>환경변수를 설정해준다.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo mv python python_backup</span><br><span class="line">$ sudo ln -s python3.6 python</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>확인</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ python -V</span><br><span class="line">Python 3.6.3</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="pip-를-이용한-모듈-설치"><a href="#pip-를-이용한-모듈-설치" class="headerlink" title="# pip 를 이용한 모듈 설치"></a># pip 를 이용한 모듈 설치</h3><ul>
+<li>pip란 Python Package Index 의 약자로 공식홈페이지는 다음과 같다. ( <a href="https://pypi.python.org/pypi/pip" target="_blank" rel="noopener">https://pypi.python.org/pypi/pip</a> )</li>
+<li>설치할 모듈을 다음과 같이 설치해주면 된다. ex : requests 모듈인 경우<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo python3.6 -m pip install requests</span><br></pre></td></tr></table></figure></li>
+</ul>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/python/">python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/01/25/apache-access-log-to-es/" data-tooltip="아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자." aria-label="PREVIOUS: 아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자.">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/12/14/elastic-on-tour/" data-tooltip="Elastic{ON}Tour" aria-label="NEXT: Elastic{ON}Tour">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/01/08/python-2-to-3/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/01/08/python-2-to-3/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/01/08/python-2-to-3/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/01/25/apache-access-log-to-es/" data-tooltip="아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자." aria-label="PREVIOUS: 아파치 엑세스 로그를 엘라스틱서치에 인덱싱 해보자.">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2017/12/14/elastic-on-tour/" data-tooltip="Elastic{ON}Tour" aria-label="NEXT: Elastic{ON}Tour">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/01/08/python-2-to-3/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/01/08/python-2-to-3/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/01/08/python-2-to-3/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/01/08/python-2-to-3/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/01/08/python-2-to-3/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/01/08/python-2-to-3/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2018/01/08/python-2-to-3/';
+                 
+                    this.page.identifier = '2018/01/08/python-2-to-3/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>

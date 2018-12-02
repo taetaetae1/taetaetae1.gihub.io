@@ -1,0 +1,620 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>Jenkins에서 파이썬 출력을 실시간으로 보고싶다면? - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"필자가 운영하고 있는 Daily Dev Blog 라는 서비스는 매일 동일한 시간에 주기적으로 데이터를 크롤링 하고 사용자에게 메일을 발송하는 일련의 작업을 수행하고 있다. 헌데 예상하지 못한 부분에서 예외가 발생하게 되면 어떤경우는 메일 발송을 못한다거나 기존에 발송했던 데이터를 다시 보내는 등 정상적이지 못한 상황을 맞이하게 된다.메일이 하루라도 잘못오면 여기저기서 연락이 온다. 감사한 분들...메일이 하루라도 잘못오면 여기저기서 연락이 온다. 감사한 분들...이런저런 바쁜일들로 차일피일 미루다 마침 여유가 생겨 기존에는 Crontab 스케쥴로 파이썬 스크립트를 실행하던 것에서 Jenkins로 옮기는 작업을 했다. 젠킨스가 스케쥴링을 해주고 실행이력을 보여주며, 실시간으로 스크립트가 돌아가는걸 볼수 있을것 같다는 기대감에서이다. 위에서 이야기 했던 예외상황을 보다 빠르고 편하게 실시간으로 디버깅을 하기 위해서가 가장 컸다.\n# 당연히 될거라고 생각했으나…작업은 간단할꺼라 생각했다. \n\n우선 Jenkins를 설치하고 \n기존에 스크립트 파일을 Jenkins Job으로 옮긴후에 \n적당한 코드 중간중간에 디버깅이 용이하도록 로그를 출력하게 해둔다음\n스케쥴링만 걸어두면 끝이라고 생각했다. \n\n하지만, 이렇게 간단하게 끝날것만 같았던 작업이 은근 귀찮은 작업이 될줄이야. 디버깅을 위해 로그를 출력하도록 해놨는데 모든 스크립트가 끝이 나서야 해당 로그가 출력되는 것이였다. 로그를 실시간으로 볼수 없다면 Crontab에서 Jenkins로 옮기는 이유가 크게 없게 된다. 실제로 아래처럼 코드를 작성하고 Jenkins Job을 실행시켜보면 다 끝나고서야 출력이 되는걸 볼수 있었다. \n(1초에 한번씩 5초동안 로그를 찍는 간단한 코드다.)\n123456789import timeprint('start')for second in range(0,5) :  print(second)  time.sleep(second)print('end')\n스크립트가 다 끝나서야 출력을 볼수 있다ㅠ 실시간으로 디버깅이 어렵다.스크립트가 다 끝나서야 출력을 볼수 있다ㅠ 실시간으로 디버깅이 어렵다.\n# 그럼 어떻게 해야할까?개발을 하면서 만나는 대부분의 문제들은 누군가 과거에 경험했던 문제였고, 이미 해결된 문제일 확률이 상당히 높은것들이 많다. 이번에도 역시, 갓 스택 오버플로우 : https://stackoverflow.com/questions/107705/disable-output-buffering\n위 링크에서 알려준것처럼 해보면 다음과 같이 로그가 출력되는대로 젠킨스에서 볼수 있게 된다.콘솔환경에서의 디버깅은 로깅이 최고!콘솔환경에서의 디버깅은 로깅이 최고!\n정리해보면 다음과 같은 방법이 있겠다.\n\nExecute Python script 을 활용하여 Jenkins 에 직접 코드를 작성하는 경우 \n\nprint의 flush옵션을 활용 ( https://docs.python.org/3/library/functions.html?highlight=print#print )\n\n1print('hello', flush=True)\n\n매번 print 가 될때마다 flush가 되도록 재정의\n\n123456789101112131415import sysclass Unbuffered(object):   def __init__(self, stream):     self.stream = stream   def write(self, data):     self.stream.write(data)     self.stream.flush()   def writelines(self, datas):     self.stream.writelines(datas)     self.stream.flush()   def __getattr__(self, attr):     return getattr(self.stream, attr)sys.stdout=Unbuffered(sys.stdout)\n\nExecute shell을 활용하여 특정경로의 Python 파일을 실행할 경우\n\n-u 옵션을 줘서 실행시킨다. ( python -u python_module.py )\n\n\n\n이렇게 두고보면 너무 간단한 작업인데 이런 방법을 모르는 상황에서는 작성된 Python Script를 Shell Script로 다시 감싸보거나 Python 코드를 쓰지 말까 까지 생각했었다… 삽질의 연속들… (Shell Script로 작성하면 바로바로 보였기 때문…)\n다시한번 모르면 몸이 고생한다(?)라는걸 몸소 체험한 좋은…시간이였다.\n","dateCreated":"2018-12-02T01:40:11+09:00","dateModified":"2018-12-03T05:07:31+09:00","datePublished":"2018-12-02T01:40:11+09:00","description":"필자가 운영하고 있는 Daily Dev Blog 라는 서비스는 매일 동일한 시간에 주기적으로 데이터를 크롤링 하고 사용자에게 메일을 발송하는 일련의 작업을 수행하고 있다. 헌데 예상하지 못한 부분에서 예외가 발생하게 되면 어떤경우는 메일 발송을 못한다거나 기존에 발송했던 데이터를 다시 보내는 등 정상적이지 못한 상황을 맞이하게 된다.","headline":"Jenkins에서 파이썬 출력을 실시간으로 보고싶다면?","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2018/12/02/python-buffer/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2018/12/02/python-buffer/","keywords":"python, jenkins"}</script>
+    <meta name="description" content="필자가 운영하고 있는 Daily Dev Blog 라는 서비스는 매일 동일한 시간에 주기적으로 데이터를 크롤링 하고 사용자에게 메일을 발송하는 일련의 작업을 수행하고 있다. 헌데 예상하지 못한 부분에서 예외가 발생하게 되면 어떤경우는 메일 발송을 못한다거나 기존에 발송했던 데이터를 다시 보내는 등 정상적이지 못한 상황을 맞이하게 된다.">
+<meta name="keywords" content="python,jenkins">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Jenkins에서 파이썬 출력을 실시간으로 보고싶다면?">
+<meta property="og:url" content="https://taetaetae.github.io/2018/12/02/python-buffer/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="필자가 운영하고 있는 Daily Dev Blog 라는 서비스는 매일 동일한 시간에 주기적으로 데이터를 크롤링 하고 사용자에게 메일을 발송하는 일련의 작업을 수행하고 있다. 헌데 예상하지 못한 부분에서 예외가 발생하게 되면 어떤경우는 메일 발송을 못한다거나 기존에 발송했던 데이터를 다시 보내는 등 정상적이지 못한 상황을 맞이하게 된다.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-12-02T20:07:31.557Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Jenkins에서 파이썬 출력을 실시간으로 보고싶다면?">
+<meta name="twitter:description" content="필자가 운영하고 있는 Daily Dev Blog 라는 서비스는 매일 동일한 시간에 주기적으로 데이터를 크롤링 하고 사용자에게 메일을 발송하는 일련의 작업을 수행하고 있다. 헌데 예상하지 못한 부분에서 예외가 발생하게 되면 어떤경우는 메일 발송을 못한다거나 기존에 발송했던 데이터를 다시 보내는 등 정상적이지 못한 상황을 맞이하게 된다.">
+<meta name="twitter:image" content="https://taetaetae.github.io/2018/12/02/python-buffer/ddb_duplication.png">
+    
+    
+        
+    
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Jenkins에서 파이썬 출력을 실시간으로 보고싶다면?
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-12-02T01:40:11+09:00">
+	
+		    Dec 02, 2018
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>필자가 운영하고 있는 <a href="http://daily-devblog.com" target="_blank" rel="noopener">Daily Dev Blog</a> 라는 서비스는 매일 동일한 시간에 주기적으로 데이터를 크롤링 하고 사용자에게 메일을 발송하는 일련의 작업을 수행하고 있다. 헌데 예상하지 못한 부분에서 예외가 발생하게 되면 어떤경우는 메일 발송을 못한다거나 기존에 발송했던 데이터를 다시 보내는 등 정상적이지 못한 상황을 맞이하게 된다.<a id="more"></a><br><div class="figure center" style="width:;"><img class="fig-img" src="ddb_duplication.png" alt="메일이 하루라도 잘못오면 여기저기서 연락이 온다. 감사한 분들..."><span class="image-caption">메일이 하루라도 잘못오면 여기저기서 연락이 온다. 감사한 분들...</span><span class="caption">메일이 하루라도 잘못오면 여기저기서 연락이 온다. 감사한 분들...</span></div><br>이런저런 바쁜일들로 차일피일 미루다 마침 여유가 생겨 기존에는 Crontab 스케쥴로 파이썬 스크립트를 실행하던 것에서 Jenkins로 옮기는 작업을 했다. 젠킨스가 스케쥴링을 해주고 실행이력을 보여주며, 실시간으로 스크립트가 돌아가는걸 볼수 있을것 같다는 기대감에서이다. 위에서 이야기 했던 예외상황을 보다 빠르고 편하게 실시간으로 디버깅을 하기 위해서가 가장 컸다.</p>
+<h3 id="당연히-될거라고-생각했으나…"><a href="#당연히-될거라고-생각했으나…" class="headerlink" title="# 당연히 될거라고 생각했으나…"></a># 당연히 될거라고 생각했으나…</h3><p>작업은 간단할꺼라 생각했다. </p>
+<ol>
+<li>우선 <a href="https://taetaetae.github.io/2018/12/02/jenkins-install/">Jenkins를 설치</a>하고 </li>
+<li>기존에 스크립트 파일을 Jenkins Job으로 옮긴후에 </li>
+<li>적당한 코드 중간중간에 디버깅이 용이하도록 로그를 출력하게 해둔다음</li>
+<li>스케쥴링만 걸어두면 끝이라고 생각했다. </li>
+</ol>
+<p>하지만, 이렇게 간단하게 끝날것만 같았던 작업이 은근 귀찮은 작업이 될줄이야. 디버깅을 위해 로그를 출력하도록 해놨는데 모든 스크립트가 끝이 나서야 해당 로그가 출력되는 것이였다. 로그를 실시간으로 볼수 없다면 Crontab에서 Jenkins로 옮기는 이유가 크게 없게 된다. 실제로 아래처럼 코드를 작성하고 Jenkins Job을 실행시켜보면 다 끝나고서야 출력이 되는걸 볼수 있었다. </p>
+<p>(1초에 한번씩 5초동안 로그를 찍는 간단한 코드다.)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">print(<span class="string">'start'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> second <span class="keyword">in</span> range(<span class="number">0</span>,<span class="number">5</span>) :</span><br><span class="line">  print(second)</span><br><span class="line">  time.sleep(second)</span><br><span class="line"></span><br><span class="line">print(<span class="string">'end'</span>)</span><br></pre></td></tr></table></figure>
+<div class="figure center" style="width:;"><img class="fig-img" src="before.gif" alt="스크립트가 다 끝나서야 출력을 볼수 있다ㅠ 실시간으로 디버깅이 어렵다."><span class="image-caption">스크립트가 다 끝나서야 출력을 볼수 있다ㅠ 실시간으로 디버깅이 어렵다.</span><span class="caption">스크립트가 다 끝나서야 출력을 볼수 있다ㅠ 실시간으로 디버깅이 어렵다.</span></div>
+<h3 id="그럼-어떻게-해야할까"><a href="#그럼-어떻게-해야할까" class="headerlink" title="# 그럼 어떻게 해야할까?"></a># 그럼 어떻게 해야할까?</h3><p>개발을 하면서 만나는 대부분의 문제들은 누군가 과거에 경험했던 문제였고, 이미 해결된 문제일 확률이 상당히 높은것들이 많다. 이번에도 역시, 갓 스택 오버플로우 : <a href="https://stackoverflow.com/questions/107705/disable-output-buffering" target="_blank" rel="noopener">https://stackoverflow.com/questions/107705/disable-output-buffering</a></p>
+<p>위 링크에서 알려준것처럼 해보면 다음과 같이 로그가 출력되는대로 젠킨스에서 볼수 있게 된다.<br><div class="figure center" style="width:;"><img class="fig-img" src="after.gif" alt="콘솔환경에서의 디버깅은 로깅이 최고!"><span class="image-caption">콘솔환경에서의 디버깅은 로깅이 최고!</span><span class="caption">콘솔환경에서의 디버깅은 로깅이 최고!</span></div></p>
+<p>정리해보면 다음과 같은 방법이 있겠다.</p>
+<ol>
+<li><p><code>Execute Python script</code> 을 활용하여 Jenkins 에 직접 코드를 작성하는 경우 </p>
+<ul>
+<li>print의 flush옵션을 활용 ( <a href="https://docs.python.org/3/library/functions.html?highlight=print#print" target="_blank" rel="noopener">https://docs.python.org/3/library/functions.html?highlight=print#print</a> )</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">print(<span class="string">'hello'</span>, flush=<span class="keyword">True</span>)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>매번 print 가 될때마다 flush가 되도록 재정의</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Unbuffered</span><span class="params">(object)</span>:</span></span><br><span class="line">   <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, stream)</span>:</span></span><br><span class="line">     self.stream = stream</span><br><span class="line">   <span class="function"><span class="keyword">def</span> <span class="title">write</span><span class="params">(self, data)</span>:</span></span><br><span class="line">     self.stream.write(data)</span><br><span class="line">     self.stream.flush()</span><br><span class="line">   <span class="function"><span class="keyword">def</span> <span class="title">writelines</span><span class="params">(self, datas)</span>:</span></span><br><span class="line">     self.stream.writelines(datas)</span><br><span class="line">     self.stream.flush()</span><br><span class="line">   <span class="function"><span class="keyword">def</span> <span class="title">__getattr__</span><span class="params">(self, attr)</span>:</span></span><br><span class="line">     <span class="keyword">return</span> getattr(self.stream, attr)</span><br><span class="line"></span><br><span class="line">sys.stdout=Unbuffered(sys.stdout)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>Execute shell</code>을 활용하여 특정경로의 Python 파일을 실행할 경우</p>
+<ul>
+<li><code>-u</code> 옵션을 줘서 실행시킨다. ( python -u python_module.py )</li>
+</ul>
+</li>
+</ol>
+<p>이렇게 두고보면 너무 간단한 작업인데 이런 방법을 모르는 상황에서는 작성된 Python Script를 Shell Script로 다시 감싸보거나 Python 코드를 쓰지 말까 까지 생각했었다… 삽질의 연속들… (Shell Script로 작성하면 바로바로 보였기 때문…)</p>
+<p>다시한번 모르면 몸이 고생한다(?)라는걸 몸소 체험한 좋은…시간이였다.</p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/jenkins/">jenkins</a> <a class="tag tag--primary tag--small t-link" href="/tags/python/">python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/12/02/jenkins-install/" data-tooltip="Jenkins 설치 치트키" aria-label="PREVIOUS: Jenkins 설치 치트키">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/10/14/deview-2018/" data-tooltip="Deview 2018 리뷰 (Day 1, Day2)" aria-label="NEXT: Deview 2018 리뷰 (Day 1, Day2)">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/12/02/python-buffer/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/12/02/python-buffer/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/12/02/python-buffer/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/12/02/jenkins-install/" data-tooltip="Jenkins 설치 치트키" aria-label="PREVIOUS: Jenkins 설치 치트키">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2018/10/14/deview-2018/" data-tooltip="Deview 2018 리뷰 (Day 1, Day2)" aria-label="NEXT: Deview 2018 리뷰 (Day 1, Day2)">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/12/02/python-buffer/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/12/02/python-buffer/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/12/02/python-buffer/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/12/02/python-buffer/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/12/02/python-buffer/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/12/02/python-buffer/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2018/12/02/python-buffer/';
+                 
+                    this.page.identifier = '2018/12/02/python-buffer/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>
