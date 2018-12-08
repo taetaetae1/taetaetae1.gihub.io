@@ -229,11 +229,11 @@
     
       <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
     
+      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
+    
       <category term="nginx" scheme="https://taetaetae.github.io/tags/nginx/"/>
     
       <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
-    
-      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
     
   </entry>
   
@@ -255,13 +255,13 @@
       <category term="tech" scheme="https://taetaetae.github.io/categories/tech/"/>
     
     
-      <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
-    
       <category term="python" scheme="https://taetaetae.github.io/tags/python/"/>
     
-      <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
+      <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
     
       <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
+    
+      <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
     
   </entry>
   
@@ -315,11 +315,11 @@
       <category term="tech" scheme="https://taetaetae.github.io/categories/tech/"/>
     
     
-      <category term="elasticsearch" scheme="https://taetaetae.github.io/tags/elasticsearch/"/>
-    
       <category term="python" scheme="https://taetaetae.github.io/tags/python/"/>
     
       <category term="anomaly detection" scheme="https://taetaetae.github.io/tags/anomaly-detection/"/>
+    
+      <category term="elasticsearch" scheme="https://taetaetae.github.io/tags/elasticsearch/"/>
     
       <category term="prophet" scheme="https://taetaetae.github.io/tags/prophet/"/>
     
