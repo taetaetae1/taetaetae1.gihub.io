@@ -229,11 +229,11 @@
     
       <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
     
-      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
-    
       <category term="nginx" scheme="https://taetaetae.github.io/tags/nginx/"/>
     
       <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
+    
+      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
     
   </entry>
   
@@ -259,9 +259,9 @@
     
       <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
     
-      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
-    
       <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
+    
+      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
     
   </entry>
   
