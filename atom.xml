@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://taetaetae.github.io/"/>
-  <updated>2018-12-02T21:07:55.951Z</updated>
+  <updated>2018-12-13T15:43:46.153Z</updated>
   <id>https://taetaetae.github.io/</id>
   
   <author>
@@ -20,6 +20,28 @@
       https://taetaetae.github.io/assets/images/profile.png
     </url>
   </image>
+  
+  <entry>
+    <title>엘라스틱서치 12월 서울 밋업 후기</title>
+    <link href="https://taetaetae.github.io/2018/12/13/elastic-meetup-201812/"/>
+    <id>https://taetaetae.github.io/2018/12/13/elastic-meetup-201812/</id>
+    <published>2018-12-13T13:27:02.000Z</published>
+    <updated>2018-12-13T15:43:46.153Z</updated>
+    
+    <content type="html"><![CDATA[<p>엘라스틱을 처음 접하게 된 건 2017년 여름 facebook 피드에 <code>Elastic Stack을 이용한 서울시 지하철 대시보드</code> 라는 <a href="https://www.elastic.co/kr/blog/seoul-metro-2014" target="_blank" rel="noopener">링크</a>를 보게 된 것부터인 것 같다. 그 당시 데이터 분석 및 자동화에 관심이 커지고 있던 찰나였는데 <a id="more"></a>키바나로 간단하면서도 아주 멋진 대시보드를 그릴 수 있다는 게 너무 흥미롭게 다가왔고 거기다 실시간으로 볼수 있다는 점에 공부를 시작하지 않을 수 없었다. 그렇게 이것저것 만들어 보기도 하고 한국 엘라스틱서치 커뮤니티 활동을 해오던 찰나 (최근들어 눈팅만 하고 있지만…) 올해 마지막 밋업을 한다고 하여 참여하게 되었다.</p><h3 id="여기어때-본사-방문"><a href="#여기어때-본사-방문" class="headerlink" title="# 여기어때 본사 방문"></a># 여기어때 본사 방문</h3><p>강남에 위치한 여기어때 본사에서 밋업을 하게 되어 덕분에 다른 회사 구경을 할 수 있게 되었다. 예전 다른 IT 스타트업 밋업 행사에서도 느꼈던 부분인데 엄청나게 큰 시설은 아니지만 아기자기하게 회사의 색깔과 특징을 잘 살려놓은 인테리어가 인상적이었다. 그런데 생각보다 사람이 너무~ 많이 와서 약간 집중이 안 될것 같았지만 다행히도 자리를 잘 잡아서 세션을 듣는 데는 무리가 없었다. (정확하진 않지만 참석하신 분들 중의 절반 정도만 강의장에 들어오고 나머지는 밖에서 듣는 걸 보고 이런 IT 행사의 인기를 다시 한번 실감할 수 있었다.)<br><div class="figure center" style="width:;"><img class="fig-img" src="elastic_1.png" alt="여기어때 본사건물에서 엘라스틱 밋업을!"><span class="image-caption">여기어때 본사건물에서 엘라스틱 밋업을!</span><span class="caption">여기어때 본사건물에서 엘라스틱 밋업을!</span></div></p><h3 id="엘라스틱서치-6-5-최신버전-소개-및-커뮤니티-회고"><a href="#엘라스틱서치-6-5-최신버전-소개-및-커뮤니티-회고" class="headerlink" title="# 엘라스틱서치 6.5 최신버전 소개 및 커뮤니티 회고"></a># 엘라스틱서치 6.5 최신버전 소개 및 커뮤니티 회고</h3><p>행사 처음 세션으로 김종민 커뮤니티 엔지니어 분께서 엘라스틱의 최근 업데이트 정보와 커뮤니티 활동에 대해서 회고해주셨다. 내가 처음 엘라스틱서치를 접한 버전이 2.4였는데 벌써 6.5라니… 빨라도 너무 빠르다. 이번 버전에서는 한 클러스터에서 다른 클러스터로의 인덱스를 복제하는 방법인 Cross-cluster replication (클러스터 복제) 기능이 추가되었고 ODBC Client 추가, 자바 11지원 등 여러 가지 기능이 추가되었다고 한다.<br>특히 키바나에서는 파일을 업로드하면 자동으로 분석해서 인덱싱을 해주는 기능도 생겼고 (파일 크기가 100메가 제한이라는게 살짝 아쉽긴 했다.) 캔버스, 스페이스 등 역시 키바나 라는 생각이 들 정도로 비주얼라이징을 한번더 업그레이드 한듯 하다. (다 사용할 수 있을까 하는 정도로… 엘라스틱 스택을 들어보기만 하던 함께 참석한 동기 녀석도 당장 해보겠다고 할 정도로…)<br>다른 자세한 내용은 <a href="https://www.elastic.co/kr/blog/elastic-stack-6-5-0-released" target="_blank" rel="noopener">여기</a>서 확인이 가능하다.<br><div class="figure center" style="width:;"><img class="fig-img" src="elastic_2_1.png" alt="너무나 빠른 버전업과 너무나 발빠르게 움직이는 사람들"><span class="image-caption">너무나 빠른 버전업과 너무나 발빠르게 움직이는 사람들</span><span class="caption">너무나 빠른 버전업과 너무나 발빠르게 움직이는 사람들</span></div></p><h3 id="엘라스틱서치-활용사례"><a href="#엘라스틱서치-활용사례" class="headerlink" title="# 엘라스틱서치 활용사례"></a># 엘라스틱서치 활용사례</h3><p>스마일게이트 및 여기어때 에서 엘라스틱 서치를 활용한 사례를 발표해 주셨다. 하지만 아쉽게도 필자는 5.6 버전까지밖에 사용한 게 전부여서인지(그것도 일부 기능만) 전체 발표 내용을 다 이해를 하진 못했지만 구축하면서 생긴 문제나 삽질 경험담을 공유해주셔서 간접적으로라도 그때의 현장감(?)을 느낄 수 있어 좋았고, 한편으로 여태까지 나름 엘라스틱서치를 만져봤다고 약간의 자신감 반 자만심 반으로 생각했었는데 역시 세상엔 고수가 많구나 하며 다시 분발해야겠다고 다짐했다.<br><div class="figure center" style="width:;"><img class="fig-img" src="elastic_2_2.png" alt="스마일게이트 + 여기어때"><span class="image-caption">스마일게이트 + 여기어때</span><span class="caption">스마일게이트 + 여기어때</span></div></p><h3 id="마치며"><a href="#마치며" class="headerlink" title="# 마치며"></a># 마치며</h3><p>커뮤니티 활동 회고 시간에 누가 페이스북 커뮤니티에서 “공유”라는 단어를 사용해서 게시글을 작성했는지 키바나로 보여주고 밋업에 온 사람이 있다면 5만원 여기어때 쿠폰을 준다고 했었다. 마침 키바나 대시보드 한쪽 구석에 필자의 이름이 보였지만 (예전에 나름 활발하게 질문도 하고 공유도 했던 적이 있어서…) 쿠폰을 받는구나 하며 기대를 하고 있었지만 아쉽게도 최근에 작성한 몇 분에게만 선물이 돌아갔다… 하지만 그 아쉬움도 잠시, 무작위로 추첨하여 또 쿠폰을 준다고 했는데 당첨이 되어서ㅎㅎ 감사하게도 쿠폰을 받는 기쁨을 누릴 수 있었다!!</p><div class="figure center" style="width:;"><img class="fig-img" src="elastic_3.png" alt="역시 밋업의 마무리는 굿즈모음이지(?)"><span class="image-caption">역시 밋업의 마무리는 굿즈모음이지(?)</span><span class="caption">역시 밋업의 마무리는 굿즈모음이지(?)</span></div><p>매번 이런 IT밋업에 참가 신청을 하고 참석하기 전에는 “아 귀찮다. 취소할까. 날도 추운데. 피곤한데” 하며 가기 싫었지만 막상 와보면 생각보다 많은 것을 배워가고 얻어 간다. (쿠폰을 받아서가 아니라…) 세션에 발표하시는 분들, 그리고 그 발표를 듣는 참석하신 분들의 눈동자에서 배움에는 끝이 없고 배워야 살아남는다는 걸 (특히 IT직군은 더…) 다시 한번 느끼고 생각할 수 있었던 좋은 시간이었다.</p><p>내년엔 엘라스틱으로 뭘 만들어 볼까! 새로워진 기능들 + 삽질 경험담을 내 것으로 만들어 보자!</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;엘라스틱을 처음 접하게 된 건 2017년 여름 facebook 피드에 &lt;code&gt;Elastic Stack을 이용한 서울시 지하철 대시보드&lt;/code&gt; 라는 &lt;a href=&quot;https://www.elastic.co/kr/blog/seoul-metro-2014&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;링크&lt;/a&gt;를 보게 된 것부터인 것 같다. 그 당시 데이터 분석 및 자동화에 관심이 커지고 있던 찰나였는데
+    
+    </summary>
+    
+      <category term="blog" scheme="https://taetaetae.github.io/categories/blog/"/>
+    
+    
+      <category term="elasticsearch" scheme="https://taetaetae.github.io/tags/elasticsearch/"/>
+    
+  </entry>
   
   <entry>
     <title>Jenkins 설치 치트키</title>
@@ -255,9 +277,9 @@
       <category term="tech" scheme="https://taetaetae.github.io/categories/tech/"/>
     
     
-      <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
-    
       <category term="python" scheme="https://taetaetae.github.io/tags/python/"/>
+    
+      <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
     
       <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
     
@@ -504,34 +526,6 @@
       <category term="github" scheme="https://taetaetae.github.io/tags/github/"/>
     
       <category term="jenkins" scheme="https://taetaetae.github.io/tags/jenkins/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>linux(centOS)에서 selenium 설정하기 (feat. python)</title>
-    <link href="https://taetaetae.github.io/2018/02/01/linux-selenium/"/>
-    <id>https://taetaetae.github.io/2018/02/01/linux-selenium/</id>
-    <published>2018-02-01T05:52:10.000Z</published>
-    <updated>2018-07-29T08:31:26.226Z</updated>
-    
-    <content type="html"><![CDATA[<p>테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 <code>Regression Test</code>. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 <code>selenium</code> 에 대해서 알아보고자 한다.<a id="more"></a></p><p>처음부터 사실 web application 테스트를 하려고 selenium 를 알아보게 된건 아니고, 내가 참여하고 있는 특정 밴드(네이버 BAND)에서 일주일에 한번씩 동일한 형태의 글을 올리고 있는데 (일종의 한주 출석체크 같은…) 이를 자동화 해볼순 없을까 하며 밴드 API를 찾아보다 selenium 라는것을 알게되었고, 매크로처럼 어떤버튼 누르고 그다음 어떤버튼 누르고 하는 일련의 과정을 코드로 구성할수 있다는 점에 감동을 받아(?) + 별도의 API를 발급받지 않아도 되어 사용하게 되었다. (물론 UI가 바뀌면 골치아프겠지만…)</p><blockquote><p>여기서는 selenium 이 무엇인지에 대한 설명은 하지 않는다. (인터넷에 나보다 정리 잘된글이 많으니…) 단, linux 환경에서 셋팅하는 정보가 너무 없고 몇일동안 삽질을 한게 아쉬워서 그 과정을 포스팅 해본다. (나같은 분이 이 글을 보고 도움이 되실꺼라는 기대를 갖으며…)</p></blockquote><blockquote><p>※ 주의 : 본 포스팅은 밴드 서비스에 글을 올릴수 있는 비 정상적인 방법의 공유가 아닌, selenium에 대한 사용 후기(?)에 대한 글입니다. (참고로 막혔어요 -ㅁ-)</p></blockquote><h3 id="설정하기"><a href="#설정하기" class="headerlink" title="설정하기"></a>설정하기</h3><p>서버 환경은 CentOS 7.4 64Bit + Python 3.6.3 + jdk 8 이다. 우선 selenium 을 설치해준다.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo python3.6 -m pip install selenium</span><br></pre></td></tr></table></figure></p><p>그 다음 CentOS에서 크롬브라우저를 설치하기 위하여 yum 저장소를 추가한다. (꼭 크롬이 아니더라도 파이어폭스나 지금은 지원이 끊긴 팬텀JS 같은것으로 활용할수도 있으나 다른것들도 해봤는데 자꾸 설정에서 걸려서 크롬에 대한 내용을 포스팅 한다.)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ sudo vi /etc/yum.repos.d/google-chrome.repo</span><br><span class="line">[google-chrome]</span><br><span class="line">name=google-chrome</span><br><span class="line">baseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=1</span><br><span class="line">gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub</span><br></pre></td></tr></table></figure></p><p>그리고는 yum 으로 크롬 브라우저를 설치한다. (내가 설치했을때의 버전은 <code>google-chrome-stable.x86_64 0:64.0.3282.119-1</code>)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ yum install google-chrome-stable</span><br></pre></td></tr></table></figure></p><p>크롬드라이버를 설치해야한다. 다음 url에서 받을수 있는데 <a href="https://sites.google.com/a/chromium.org/chromedriver/downloads" target="_blank" rel="noopener">https://sites.google.com/a/chromium.org/chromedriver/downloads</a> 나는 2.35 linux64 버전을 받았다. 다운받고 unzip 하면 딱하나 파일이 있는데 나중에 selenium 을 사용할때 이용되니 path를 알아두자.</p><p>그다음 파이썬 코드를 작성한다. 내가 짠 파이썬 코드는 다음과 같은 순서로 실행이 된다.</p><ul><li>밴드 접속 ( <a href="https://band.us/home" target="_blank" rel="noopener">https://band.us/home</a> )</li><li>로그인</li><li>특정 밴드 선택</li><li>글쓰기 버튼 누르고 양식에 맞춰 글 작성</li><li>글 등록</li></ul><p>파이썬 코드는 아래처럼 작성하였다. (중요부분만.. 그 아래는 자유)<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> selenium <span class="keyword">import</span> webdriver</span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.chrome.options <span class="keyword">import</span> Options</span><br><span class="line"></span><br><span class="line"><span class="comment"># 초기화 --------------------------------------------</span></span><br><span class="line">chrome_options = Options()</span><br><span class="line">chrome_options.add_argument(<span class="string">"--headless"</span>)</span><br><span class="line"></span><br><span class="line">driver  = webdriver.Chrome(executable_path=<span class="string">'home/~~~/chromedriver'</span>, chrome_options=chrome_options)</span><br><span class="line">driver.implicitly_wait(<span class="number">3</span>)</span><br><span class="line">driver.get(<span class="string">'https://band.us/home'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 로그인 --------------------------------------------</span></span><br><span class="line">driver.find_element_by_class_name(<span class="string">'_loginLink'</span>).click()</span><br><span class="line">...생략</span><br></pre></td></tr></table></figure></p><p>그리고 실행을 해보면 작동이 잘~ 된다.<br><div class="figure center" style="width:;"><img class="fig-img" src="result.png" alt="selenium + python 으로 자동작성된 밴드 글"><span class="image-caption">selenium + python 으로 자동작성된 밴드 글</span><span class="caption">selenium + python 으로 자동작성된 밴드 글</span></div></p><h3 id="마치며"><a href="#마치며" class="headerlink" title="마치며"></a>마치며</h3><p><code>selenium</code> 에 대해 찾아보면 거의 윈도우 환경에서 돌아가는것들에 대한 포스팅이 많았다. 난 리눅스 환경에서 스케쥴러(젠킨스 같은)를 통해 자동으로 화면없이 작동시키고 싶었는데 아무리 찾아봐도 + 삽질해도 잘 안되었다. 결국 사내에도 나같은 삽질을 하신 분을 찾고 묻고 물어 <code>크롬드라이버</code>만 있어야 하는것이 아니라 <code>크롬앱</code>또한 있어야 동작을 한다는것을 알게 되었다.<br><strong>역시, 내가 한 삽질은 누군가 이미 한 삽질이라는걸 다시한번 깨닳은 좋은(?) 시간이였다.</strong></p><p>이걸로 나중에 내가 맡고있는 서비스에 대한 웹 자동 테스트 툴도 만들어 볼 생각이다.</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;테스트 코드로 안되는 실제 브라우저단 사용성 테스트를 하고싶은 경우가 있다. 이를테면 화면이 뜨고, 어떤 버튼을 누르면, 어떤 결과가 나와야 하는 일련의 &lt;code&gt;Regression Test&lt;/code&gt;. 이때 활용할수 있는게 다양한 도구가 있지만 이번엔 &lt;code&gt;selenium&lt;/code&gt; 에 대해서 알아보고자 한다.
-    
-    </summary>
-    
-      <category term="tech" scheme="https://taetaetae.github.io/categories/tech/"/>
-    
-    
-      <category term="python" scheme="https://taetaetae.github.io/tags/python/"/>
-    
-      <category term="linux" scheme="https://taetaetae.github.io/tags/linux/"/>
-    
-      <category term="selenium" scheme="https://taetaetae.github.io/tags/selenium/"/>
-    
-      <category term="chromedriver" scheme="https://taetaetae.github.io/tags/chromedriver/"/>
     
   </entry>
   
