@@ -2,6 +2,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://taetaetae.github.io/2019/02/17/daily-dev-blog-3/</loc>
+    
+    <lastmod>2019-02-17T16:44:35.395Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://taetaetae.github.io/2018/08/05/daily-dev-blog-1/</loc>
+    
+    <lastmod>2019-02-17T13:23:26.182Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://taetaetae.github.io/2018/08/09/daily-dev-blog-2/</loc>
+    
+    <lastmod>2019-02-17T13:23:21.686Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://taetaetae.github.io/2019/02/10/access-log-to-elastic-stack/</loc>
     
     <lastmod>2019-02-10T15:44:14.470Z</lastmod>
@@ -75,20 +96,6 @@
     <loc>https://taetaetae.github.io/2018/08/21/how-to-use-cloneUtils/</loc>
     
     <lastmod>2018-08-21T14:53:28.968Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://taetaetae.github.io/2018/08/05/daily-dev-blog-1/</loc>
-    
-    <lastmod>2018-08-13T14:46:14.435Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://taetaetae.github.io/2018/08/09/daily-dev-blog-2/</loc>
-    
-    <lastmod>2018-08-13T14:46:10.867Z</lastmod>
     
   </url>
   
