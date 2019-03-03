@@ -172,9 +172,9 @@
     <link href="https://taetaetae.github.io/2018/12/02/jenkins-install/"/>
     <id>https://taetaetae.github.io/2018/12/02/jenkins-install/</id>
     <published>2018-12-01T19:37:59.000Z</published>
-    <updated>2018-12-02T21:07:55.951Z</updated>
+    <updated>2019-03-03T10:23:35.601Z</updated>
     
-    <content type="html"><![CDATA[<p>“show me the money”, “black sheep wall”.<br>어렸을적 스타크래프트라는 게임이 나오고서 입에 달고 살았던 <code>치트키</code>. 게임이 시작되고 해당 치트키를 입력하면 돈이 들어오거나 맵이 훤하게 보여 컴퓨터를 이기는데 도움을 주곤 했었다. <a id="more"></a><br>개발을 하면서 Jenkins는 나 대신 어떤 업무를 수행하는데 강력한 툴 중에 하나이다. (물론 만능이라는 소리는 아니지만…) 새로운 프로젝트가 시작되거나 개발도중 무언가 자동화를 하고 싶을 경우엔 Jenkins를 찾게 되는데 그럴때마다 설치를 하고 이런저런 설정이 필요하다.<br>눈치를 챘을수도 있지만 이 포스트는 오로지 <code>젠킨스 설치하는 방법</code>을 아주 간단하고 핵심만 정리하고자 한다. 마치 <code>치트키</code>처럼.<br>나중에 다시 보기위해 + 누군가 해당 포스트를 보고 도움이 되었으면 하는 바람으로.</p><p>(물론 이 방법밖에 있는건 아니지만 필자는 아래와 방법을 사용하고 있다.)</p><hr><p>우선 CentOS 환경에 Java가 설치되어 있는 상황이라 가정한다.</p><ul><li><p>적당한 위치에 tomcat 다운 ( <a href="https://tomcat.apache.org/download-80.cgi" target="_blank" rel="noopener">https://tomcat.apache.org/download-80.cgi</a> )</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget http://apache.mirror.cdnetworks.com/tomcat/tomcat-8/v8.5.35/bin/apache-tomcat-8.5.35.tar.gz</span><br></pre></td></tr></table></figure></li><li><p>압축 해제후 하위 폴더중 webapps로 이동</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf apache-tomcat-8.5.35.tar.gz</span><br><span class="line">cd apache-tomcat-8.5.35/webapps</span><br></pre></td></tr></table></figure></li><li><p>Jenkins 다운 ( <a href="https://jenkins.io/download/" target="_blank" rel="noopener">https://jenkins.io/download/</a> )</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget http://mirrors.jenkins.io/war-stable/latest/jenkins.war</span><br></pre></td></tr></table></figure></li><li><p>tomcat 하위폴더중 conf 폴더로 이동</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd ../conf</span><br></pre></td></tr></table></figure></li><li><p>server.xml 수정 및 http port 확인</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vi server.xml</span><br><span class="line"></span><br><span class="line">&lt;Host&gt; 하위에 추가</span><br><span class="line">&lt;Context path=&quot;/jenkins&quot; debug=&quot;0&quot; privileged=&quot;true&quot; docBase=&quot;jenkins.war&quot; /&gt;</span><br><span class="line"></span><br><span class="line">port 확인</span><br><span class="line">&lt;Connector port=&quot;8080&quot; protocol=&quot;HTTP/1.1&quot;/&gt;</span><br></pre></td></tr></table></figure></li><li><p>해당 서버의 ip와 위 port에 맞춰 url 입력후 jenkins 설치</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://ip:8080/jenkins</span><br></pre></td></tr></table></figure></li></ul>]]></content>
+    <content type="html"><![CDATA[<p>“show me the money”, “black sheep wall”.<br>어렸을적 스타크래프트라는 게임이 나오고서 입에 달고 살았던 <code>치트키</code>. 게임이 시작되고 해당 치트키를 입력하면 돈이 들어오거나 맵이 훤하게 보여 컴퓨터를 이기는데 도움을 주곤 했었다. <a id="more"></a><br>개발을 하면서 Jenkins는 나 대신 어떤 업무를 수행하는데 강력한 툴 중에 하나이다. (물론 만능이라는 소리는 아니지만…) 새로운 프로젝트가 시작되거나 개발도중 무언가 자동화를 하고 싶을 경우엔 Jenkins를 찾게 되는데 그럴때마다 설치를 하고 이런저런 설정이 필요하다.<br>눈치를 챘을수도 있지만 이 포스트는 오로지 <code>젠킨스 설치하는 방법</code>을 아주 간단하고 핵심만 정리하고자 한다. 마치 <code>치트키</code>처럼.<br>나중에 다시 보기위해 + 누군가 해당 포스트를 보고 도움이 되었으면 하는 바람으로.</p><p>(물론 이 방법밖에 있는건 아니지만 필자는 아래와 방법을 사용하고 있다.)</p><hr><p>우선 CentOS 환경에 Java가 설치되어 있는 상황이라 가정한다.</p><ul><li><p>적당한 위치에 tomcat 다운 ( <a href="https://tomcat.apache.org/download-80.cgi" target="_blank" rel="noopener">https://tomcat.apache.org/download-80.cgi</a> )</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget &#123;압축파일 다운경로, 필자는 apache-tomcat-8.5.35 &#125;</span><br></pre></td></tr></table></figure></li><li><p>압축 해제후 하위 폴더중 webapps로 이동</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf apache-tomcat-8.5.35.tar.gz</span><br><span class="line">cd apache-tomcat-8.5.35/webapps</span><br></pre></td></tr></table></figure></li><li><p>Jenkins 다운 ( <a href="https://jenkins.io/download/" target="_blank" rel="noopener">https://jenkins.io/download/</a> )</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget http://mirrors.jenkins.io/war-stable/latest/jenkins.war</span><br></pre></td></tr></table></figure></li><li><p>tomcat 하위폴더중 conf 폴더로 이동</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd ../conf</span><br></pre></td></tr></table></figure></li><li><p>server.xml 수정 및 http port 확인</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vi server.xml</span><br><span class="line"></span><br><span class="line">&lt;Host&gt; 하위에 추가</span><br><span class="line">&lt;Context path=&quot;/jenkins&quot; debug=&quot;0&quot; privileged=&quot;true&quot; docBase=&quot;jenkins.war&quot; /&gt;</span><br><span class="line"></span><br><span class="line">port 확인</span><br><span class="line">&lt;Connector port=&quot;8080&quot; protocol=&quot;HTTP/1.1&quot;/&gt;</span><br></pre></td></tr></table></figure></li><li><p>해당 서버의 ip와 위 port에 맞춰 url 입력후 jenkins 설치</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://ip:8080/jenkins</span><br></pre></td></tr></table></figure></li></ul>]]></content>
     
     <summary type="html">
     
@@ -375,11 +375,11 @@
     
       <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
     
-      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
-    
       <category term="nginx" scheme="https://taetaetae.github.io/tags/nginx/"/>
     
       <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
+    
+      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
     
   </entry>
   
@@ -405,9 +405,9 @@
     
       <category term="apache" scheme="https://taetaetae.github.io/tags/apache/"/>
     
-      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
-    
       <category term="web server" scheme="https://taetaetae.github.io/tags/web-server/"/>
+    
+      <category term="flask" scheme="https://taetaetae.github.io/tags/flask/"/>
     
   </entry>
   
@@ -461,11 +461,11 @@
       <category term="tech" scheme="https://taetaetae.github.io/categories/tech/"/>
     
     
+      <category term="elasticsearch" scheme="https://taetaetae.github.io/tags/elasticsearch/"/>
+    
       <category term="python" scheme="https://taetaetae.github.io/tags/python/"/>
     
       <category term="anomaly detection" scheme="https://taetaetae.github.io/tags/anomaly-detection/"/>
-    
-      <category term="elasticsearch" scheme="https://taetaetae.github.io/tags/elasticsearch/"/>
     
       <category term="prophet" scheme="https://taetaetae.github.io/tags/prophet/"/>
     
