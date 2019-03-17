@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>Jenkins 업그레이드 및 Master-Slave 구성 - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"어떠한 작업(Job)이 있다고 가정해보자. 이를 “정해진 시간에 주기적” 이나 “필요할때” 작업을 수행하고 싶다면 어떤 툴(Tool)이 떠오르는가? 그리고 이 작업(Job)들의 실행이력 등 전체적으로 관리하고 필요에 따라 다양한 플러그인을 활용하여 입맛에 맞는 작업(Job)으로 구성하고 싶을때 가장 첫번째로 떠오르는 툴은 바로 “Jenkins” 다. (극히 필자 개인적인 생각일수도 있지만… ) 물론 리눅스 기반의 crontab 이나 다른 스케쥴러를 활용할수도 있다. 다만 필자 개인적인 느낌으로 나만의 Jarvis(?)처럼 내가 원하는데로 설정만 해두면 정해진 시간에 수행하고 그 결과를 남겨놓고 문제가 발생했을때 알림도 받을수 있으니 너무 좋은 툴이라 생각이 든다.\n실제로 Jarvis가 있다면 얼마나 편할까출처 : https://gfycat.com/ko/colossalsociablebuffalo실제로 Jarvis가 있다면 얼마나 편할까출처 : https://gfycat.com/ko/colossalsociablebuffalo\n지난 포스팅(링크)에서는 Jenkins 를 설치하는 방법에 대해 알아보았다면 (정확히 말하면 치트키 수준의… ), 이번 포스팅에서는 Jenkins에 노드를 추가하여 master-slave 분산환경으로 구성하는 방법과 Jenkins 버전을 업그레이드 하는 방법에 대해 정리해보고자 한다.\n\n마침 필자의 팀에서 젠킨스를 분산환경으로 운영하고 있었는데 버전은 1.x … 간헐적으로 Jenkins 버전 이슈로 에러가 발생해서 업그레이드를 해야하는 상황이 생긴것이다. 시키지도 않은 일을 하면서 팀에 도움도 될겸, 포스팅도 할겸, 1석 2조 효과서버 환경은 CentOS 7.4 64Bit 에서 테스트 하였다.\n\n# Jenkins 버전 업그레이드 하기기존에 있었던 Jenkins의 환경설정은 어떻게 마이그레이션 하지? Job 실행기록들은 그냥 날려버려야 하나? 걱정을 하며 막상 구글링을 해보기 시작한다. 그러면 필자처럼 “안해본것에 대한 두려움” 을 갖고있는게 무색할 정도로 너무 간단하게도 그냥 기존에 있던 war 파일을 최신버전으로 교체하고 재시작 하라고 나온다.  읭? 뭐이리 간단해? 대부분의 문제들은 지레 겁부터 먹고 실행에 옮기지 못해서 않아서 해결을 하지 못하는게 절반 이상같다.  자, 바로 실행에 옮겨보자.우선 버전 업그레이드를 테스트 하기 위해 일부러 낮은버전(http://mirrors.jenkins.io/war-stable/)으로 설치를 해둔다. (필자는 1.609.1로 설치해봤다.) 그리고 버전 업그레이드 후 설정이 그대로 옮겨지는지를 확인하기위해 Security 설정을 해서 Jenkins 접근시 로그인 여부를 물어보록 설정해둔다.\n우측 하단에 빨간영역으로 낮은버전이 설치된것을 확인할수 있다.우측 하단에 빨간영역으로 낮은버전이 설치된것을 확인할수 있다.\n설정이 완료되었으면 최신버전의 war를 다운받아 교체하고 재시작을 해주면 너무나도 간단하게 버전이 업그레이드가 된것을 확인할수 있다. 그리고 처음에 설정한 Security 설정까지 그대로 유지되는것 또한 확인이 가능하다. 물론 구 버전에서 설치되었던 플러그인들이 버전업이 되며 그에 따라 지원하지 않는 문제들이 생길 수 있는데 이 부분은 플러그인을 업그레이드를 해준다거나 각 상황에 맞는 대응을 해줘야 한다. 이렇게 해서 생각보다(?) 너무 간단하게 버전업이 완료되었다.\n업그레이드 후 플러그인 업그레이드도 동일하게 맞춰주는게 중요하다.업그레이드 후 플러그인 업그레이드도 동일하게 맞춰주는게 중요하다.\n# Jenkins 분산환경 구성하기 (노드 추가하기)이번엔 Jenkins를 분산환경으로 구성해보고자 한다. 이렇게 노드를 추가하며 분산환경을 구성하는 이유는 마스터-슬레이브(Master-Slave) 패턴의 장점을 얻고자 함이다. 마스터는 작업을 쪼개고 슬레이브로 구성된 노드에게 분배를 하게되면 슬레이브 서버는 마스터의 요청을 처리하고 리턴하게 된다. 마치 스타크래프트에서 일꾼을 늘려서 미네랄과 가스를 더 빨리 얻는것처럼 말이다.\n여기서 필자가 가장 많이 삽질한 부분. 슬레이브 서버를 추가하는데 슬레이브 서버가 되는 서버에 젠킨스를 설치하고 그들을 모두 연결하려 했던것… 마치 클러스터링 하는것처럼…  당연히 Jenkins 들의 묶음형태(?) 가 되야 할것같은 생각으로 시도하였지만 엄청난 삽질의 연속이 되어버렸다. 알고보니 마스터 Jenkins에서 슬레이브 서버에 작업을 전달할수 있도록 연동만 시켜주면 자동으로 Agent를 마스터 Jenkins가 슬레이브 서버에 설치/실행을 하고 작업을 분할하는것을 확인할수 있었다. 자, 그럼 시작해보자.\n\n마스터 서버에서 공개키와 개인키 생성먼저 마스터 서버와 슬레이브 서버를 SSH로 통신할수 있도록 SSH 키 설정을 해준다. 통상 홈 디렉토리 하위 .ssh 폴더에서 생성한다.\n1234567891011121314151617181920212223242526ssh 키 생성$ ssh-keygen -t rsaGenerating public/private rsa key pair.Enter file in which to save the key (/~/.ssh/id_rsa):Enter passphrase (empty for no passphrase):Enter same passphrase again:Your identification has been saved in /~/.ssh/id_rsa.Your public key has been saved in /~/.ssh/id_rsa.pub.The key fingerprint is:SHA256:~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ user@hostnameThe key's randomart image is:+---[RSA 2048]----+|oo. .            ||o... o  +        ||. .o  o+.o       ||.++++. +o+o..    ||o.+*=.o.SEoo=    || .  o+.*...+ +   ||   .. + +.  +    ||     + .     .   ||      ...        |+----[SHA256]-----+공개키 확인$ cat id_rsa.pubssh-rsa AAAAB3Nza~~~~~~~~eQKcx8B6uAflRm1J8In1 user@hostname\n\n슬레이브 서버에서 마스터 서버에서 만든 공개키를 등록슬레이브 서버에서는 마스터 서버에서 SSH 접속을 허용해야 하기때문에 마스터 서버에서 생성한 공개키를 등록해준다. 슬레이브 서버의 홈 디렉토리 하위 .ssh 폴더아래 파일을 만들고 위 공개키를 넣어주자.\n12$ vi authorized_keysssh-rsa AAAAB3Nza~~~~~~~~eQKcx8B6uAflRm1J8In1 user@hostname\n\nJenkins 에서 Credentials 을 만들때 Private Key 설정을 “From the Jenkins master ~/.ssh”으로 설정한다. 나중에 이 정보로 인증을 처리한다.\n\n\n\n\n노드를 추가하고 조금 있으면 마스터 노드가 슬레이브 서버에 에이전트를 설치/실행하고 연동이 된것을 확인할수 있다.\n실제로 슬레이브 서버에서 프로세스를 확인하면 아래처럼 에이전트( slave.jar )가 설치/실행되고 있는것을 확인할수 있다.12345$ ps -ef | grep javauser   105431 105288  0 01:03 ?        00:00:00 bash -c cd &quot;/home&quot; &amp;&amp; java  -jar slave.jaruser   105463 105431  3 01:03 ?        00:00:08 java -jar slave.jar$ lsslave.jar logs scripts\n\n\n위와 같은 방법으로 슬레이브 서버를 총 두개를 구성하고 job을 여러개 실행하게 하면 자동으로(랜덤으로) 분배되어 실행하는것을 확인할 수 있다.\n특정 job은 특정 슬레이브 서버에서 실행하고 싶은 경우도 있다. 예로들어 특정 슬레이브 서버가 성능이 더 좋다거나 ACL이 특정 슬레이브 서버만 오픈되었다거나… 그럴경우에는 아래처럼 job 실행설정에서 슬레이브를 강제로 지정할수도 있다. (짱…)\n# Jenkins 분산환경에서 버전 업그레이드 하기이제 위에서 했던것들의 종합 세트인 “Master-Slave로 되어있는 구성에서의 Jenkins 업그레이드” 를 해보자.  우선 위에서 했던것처럼 구버전으로 Master-Slave 를 구성한다.이제부터가 중요한데 필자는 당연히 위에서 했던 업그레이드 방법처럼 (이렇게 노드가 연결되어있는 상황에서) 기존의 war을 교체하면 되겠거니 했다. 하지만 업그레이드는 되었으나 노드가 연결이 안되면서 너무나도 다양한(?)에러를 만나야만 했다. 에러 내용을 찾아보니 필자처럼 버전 업그레이드를 하며 예외상황이 발생해 에러가 나는 경우가 많았고 삽질을 거듭해본 결과 다음과 같은 방법으로 하면 업그레이드도 되고 노드도 연결이 가능한것을 확인할 수 있었다. (다른 더 좋은 방법이 있다면 알고싶다… )\n\n우선 기존에 추가해둔 노드들을 제거한다.\n그 다음 위에서 했던것처럼 war를 교체하며 업그레이드를 진행한다.\nCredentials 항목에 보면 개인키가 있는것을 볼수 있다. (기존에는 “From the Jenkins master ~/.ssh”항목이 있었는데 없어졌다. )\n위에서 했던것처럼 노드를 추가해준다. 그럼 다음과 같은 에러를 만날수 있는데 에러 내용을 보면 known_hosts 파일이 없다고 나온다. 뭔가 해결할수 있을것만 같은 느낌이 든다. master 서버에서 ssh 슬레이브서버주소 명령어를 실행해서 known_hosts 파일을 생성하도록 해준다.123456789101112131415161718$ pwd/home/.ssh$ lsid_rsa  id_rsa.pub$ ssh slave-hostThe authenticity of host 'slave-host (0.0.0.0)' can't be established.ECDSA key fingerprint is SHA256:0zb~~~~~B1A.ECDSA key fingerprint is MD5:~~~~:87.Are you sure you want to continue connecting (yes/no)? yesWarning: Permanently added 'slave-host,0.0.0.0' (ECDSA) to the list of known hosts.Last login: Thu Mar 14 13:30:04 2019 from 10.113.219.197[user@slave-host ~]$ exitlogoutConnection to slave-host closed.$ lsid_rsa  id_rsa.pub  known_hosts$ cat known_hostsslave-host,0.0.0.0 ~~~ AAAA~~~~~~~8=\n\n\n업그레이드 후 노드 구성한 화면업그레이드 후 노드 구성한 화면\n# 마치며“Master-Slave로 되어있는 구성에서의 Jenkins 업그레이드”를 하며 정말 많은 시간을 할애할 수 밖에 없었고 (관련 지식도 없고 경험도 없었으니… ) 너무 안되어 포기할까도 싶었다. 하지만 경험하지 않은 모든 일들은 다 그만큼의 고통이 필요하고, 그 고통이 있어야지만 비로소 내것이 된다는 생각을 하고 있다. 이것도 나만의 무기가 되어 나중에 jenkins 를 업그레이드 한다거나 노드구성을 할때 보다 쉽고 빠르게 할수있지 않을까 기대를 해본다. 더불어 어려운 이야기이지만 삽질도 올바른 삽질을 할수 있도록 소망해본다…이런 삽질은 그만... 출처 : https://gfycat.com/ko/illiterateonlyicelandgull이런 삽질은 그만... 출처 : https://gfycat.com/ko/illiterateonlyicelandgull\n","dateCreated":"2019-03-17T18:23:03+09:00","dateModified":"2019-03-17T18:09:35+09:00","datePublished":"2019-03-17T18:23:03+09:00","description":"어떠한 작업(Job)이 있다고 가정해보자. 이를 “정해진 시간에 주기적” 이나 “필요할때” 작업을 수행하고 싶다면 어떤 툴(Tool)이 떠오르는가?","headline":"Jenkins 업그레이드 및 Master-Slave 구성","image":["jenkins.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/","keywords":"jenkins","thumbnailUrl":"jenkins.jpg"}</script>
+    <meta name="description" content="어떠한 작업(Job)이 있다고 가정해보자. 이를 “정해진 시간에 주기적” 이나 “필요할때” 작업을 수행하고 싶다면 어떤 툴(Tool)이 떠오르는가?">
+<meta name="keywords" content="jenkins">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Jenkins 업그레이드 및 Master-Slave 구성">
+<meta property="og:url" content="https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="어떠한 작업(Job)이 있다고 가정해보자. 이를 “정해진 시간에 주기적” 이나 “필요할때” 작업을 수행하고 싶다면 어떤 툴(Tool)이 떠오르는가?">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-03-17T09:09:35.458Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Jenkins 업그레이드 및 Master-Slave 구성">
+<meta name="twitter:description" content="어떠한 작업(Job)이 있다고 가정해보자. 이를 “정해진 시간에 주기적” 이나 “필요할때” 작업을 수행하고 싶다면 어떤 툴(Tool)이 떠오르는가?">
+<meta name="twitter:image" content="https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/ColossalSociableBuffalo-size_restricted.gif">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/jenkins.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/jenkins.jpg" />
+    
+    
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>    
+    <ins class="adsbygoogle"
+   style="display:inline-block;max-width:250px;width:100%;max-height:380px;height:100%"
+   data-ad-client="ca-pub-5788330009690816">
+</ins>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Jenkins 업그레이드 및 Master-Slave 구성
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-03-17T18:23:03+09:00">
+	
+		    Mar 17, 2019
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>어떠한 작업(Job)이 있다고 가정해보자. 이를 “정해진 시간에 주기적” 이나 “필요할때” 작업을 수행하고 싶다면 어떤 툴(Tool)이 떠오르는가? <a id="more"></a>그리고 이 작업(Job)들의 실행이력 등 전체적으로 관리하고 필요에 따라 다양한 플러그인을 활용하여 입맛에 맞는 작업(Job)으로 구성하고 싶을때 가장 첫번째로 떠오르는 툴은 바로 “Jenkins” 다. (극히 필자 개인적인 생각일수도 있지만… ) 물론 리눅스 기반의 crontab 이나 다른 스케쥴러를 활용할수도 있다. 다만 필자 개인적인 느낌으로 나만의 Jarvis(?)처럼 내가 원하는데로 설정만 해두면 정해진 시간에 수행하고 그 결과를 남겨놓고 문제가 발생했을때 알림도 받을수 있으니 너무 좋은 툴이라 생각이 든다.</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="ColossalSociableBuffalo-size_restricted.gif" title="실제로 Jarvis가 있다면 얼마나 편할까<br>출처 : https://gfycat.com/ko/colossalsociablebuffalo" data-caption="실제로 Jarvis가 있다면 얼마나 편할까<br>출처 : https://gfycat.com/ko/colossalsociablebuffalo" data-fancybox="default"><img class="fig-img" src="ColossalSociableBuffalo-size_restricted.gif" alt="실제로 Jarvis가 있다면 얼마나 편할까<br>출처 : https://gfycat.com/ko/colossalsociablebuffalo"><span class="image-caption">실제로 Jarvis가 있다면 얼마나 편할까<br>출처 : https://gfycat.com/ko/colossalsociablebuffalo</span></a><span class="caption">실제로 Jarvis가 있다면 얼마나 편할까<br>출처 : https://gfycat.com/ko/colossalsociablebuffalo</span></div>
+<p>지난 포스팅(링크)에서는 Jenkins 를 설치하는 방법에 대해 알아보았다면 (정확히 말하면 치트키 수준의… ), 이번 포스팅에서는 Jenkins에 노드를 추가하여 master-slave 분산환경으로 구성하는 방법과 Jenkins 버전을 업그레이드 하는 방법에 대해 정리해보고자 한다.</p>
+<blockquote>
+<p>마침 필자의 팀에서 젠킨스를 분산환경으로 운영하고 있었는데 버전은 1.x … 간헐적으로 Jenkins 버전 이슈로 에러가 발생해서 업그레이드를 해야하는 상황이 생긴것이다. 시키지도 않은 일을 하면서 팀에 도움도 될겸, 포스팅도 할겸, 1석 2조 효과<br>서버 환경은 CentOS 7.4 64Bit 에서 테스트 하였다.</p>
+</blockquote>
+<h3 id="Jenkins-버전-업그레이드-하기"><a href="#Jenkins-버전-업그레이드-하기" class="headerlink" title="# Jenkins 버전 업그레이드 하기"></a># Jenkins 버전 업그레이드 하기</h3><p>기존에 있었던 Jenkins의 환경설정은 어떻게 마이그레이션 하지? Job 실행기록들은 그냥 날려버려야 하나? 걱정을 하며 막상 구글링을 해보기 시작한다. 그러면 필자처럼 “안해본것에 대한 두려움” 을 갖고있는게 무색할 정도로 너무 간단하게도 그냥 기존에 있던 war 파일을 최신버전으로 교체하고 재시작 하라고 나온다.  읭? 뭐이리 간단해? 대부분의 문제들은 지레 겁부터 먹고 실행에 옮기지 <del>못해서</del> 않아서 해결을 하지 못하는게 절반 이상같다.  자, 바로 실행에 옮겨보자.<br>우선 버전 업그레이드를 테스트 하기 위해 일부러 낮은버전(<a href="http://mirrors.jenkins.io/war-stable/" target="_blank" rel="noopener">http://mirrors.jenkins.io/war-stable/</a>)으로 설치를 해둔다. (필자는 1.609.1로 설치해봤다.) 그리고 버전 업그레이드 후 설정이 그대로 옮겨지는지를 확인하기위해 Security 설정을 해서 Jenkins 접근시 로그인 여부를 물어보록 설정해둔다.</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="old_jenkins.jpg" title="우측 하단에 빨간영역으로 낮은버전이 설치된것을 확인할수 있다." data-caption="우측 하단에 빨간영역으로 낮은버전이 설치된것을 확인할수 있다." data-fancybox="default"><img class="fig-img" src="old_jenkins.jpg" alt="우측 하단에 빨간영역으로 낮은버전이 설치된것을 확인할수 있다."><span class="image-caption">우측 하단에 빨간영역으로 낮은버전이 설치된것을 확인할수 있다.</span></a><span class="caption">우측 하단에 빨간영역으로 낮은버전이 설치된것을 확인할수 있다.</span></div>
+<p>설정이 완료되었으면 최신버전의 war를 다운받아 교체하고 재시작을 해주면 너무나도 간단하게 버전이 업그레이드가 된것을 확인할수 있다. 그리고 처음에 설정한 Security 설정까지 그대로 유지되는것 또한 확인이 가능하다. 물론 구 버전에서 설치되었던 플러그인들이 버전업이 되며 그에 따라 지원하지 않는 문제들이 생길 수 있는데 이 부분은 플러그인을 업그레이드를 해준다거나 각 상황에 맞는 대응을 해줘야 한다. 이렇게 해서 생각보다(?) 너무 간단하게 버전업이 완료되었다.</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="upgrade_complete.jpg" title="업그레이드 후 플러그인 업그레이드도 동일하게 맞춰주는게 중요하다." data-caption="업그레이드 후 플러그인 업그레이드도 동일하게 맞춰주는게 중요하다." data-fancybox="default"><img class="fig-img" src="upgrade_complete.jpg" alt="업그레이드 후 플러그인 업그레이드도 동일하게 맞춰주는게 중요하다."><span class="image-caption">업그레이드 후 플러그인 업그레이드도 동일하게 맞춰주는게 중요하다.</span></a><span class="caption">업그레이드 후 플러그인 업그레이드도 동일하게 맞춰주는게 중요하다.</span></div>
+<h3 id="Jenkins-분산환경-구성하기-노드-추가하기"><a href="#Jenkins-분산환경-구성하기-노드-추가하기" class="headerlink" title="# Jenkins 분산환경 구성하기 (노드 추가하기)"></a># Jenkins 분산환경 구성하기 (노드 추가하기)</h3><p>이번엔 Jenkins를 분산환경으로 구성해보고자 한다. 이렇게 노드를 추가하며 분산환경을 구성하는 이유는 마스터-슬레이브(Master-Slave) 패턴의 장점을 얻고자 함이다. 마스터는 작업을 쪼개고 슬레이브로 구성된 노드에게 분배를 하게되면 슬레이브 서버는 마스터의 요청을 처리하고 리턴하게 된다. 마치 스타크래프트에서 일꾼을 늘려서 미네랄과 가스를 더 빨리 얻는것처럼 말이다.</p>
+<p>여기서 필자가 가장 많이 삽질한 부분. 슬레이브 서버를 추가하는데 슬레이브 서버가 되는 서버에 젠킨스를 설치하고 그들을 모두 연결하려 했던것… 마치 클러스터링 하는것처럼…  당연히 Jenkins 들의 묶음형태(?) 가 되야 할것같은 생각으로 시도하였지만 엄청난 삽질의 연속이 되어버렸다. 알고보니 마스터 Jenkins에서 슬레이브 서버에 작업을 전달할수 있도록 연동만 시켜주면 자동으로 Agent를 마스터 Jenkins가 슬레이브 서버에 설치/실행을 하고 작업을 분할하는것을 확인할수 있었다. 자, 그럼 시작해보자.</p>
+<ol>
+<li><p>마스터 서버에서 공개키와 개인키 생성<br>먼저 마스터 서버와 슬레이브 서버를 SSH로 통신할수 있도록 SSH 키 설정을 해준다. 통상 홈 디렉토리 하위 .ssh 폴더에서 생성한다.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">ssh 키 생성</span><br><span class="line"><span class="meta">$</span> ssh-keygen -t rsa</span><br><span class="line">Generating public/private rsa key pair.</span><br><span class="line">Enter file in which to save the key (/~/.ssh/id_rsa):</span><br><span class="line">Enter passphrase (empty for no passphrase):</span><br><span class="line">Enter same passphrase again:</span><br><span class="line">Your identification has been saved in /~/.ssh/id_rsa.</span><br><span class="line">Your public key has been saved in /~/.ssh/id_rsa.pub.</span><br><span class="line">The key fingerprint is:</span><br><span class="line">SHA256:~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ user@hostname</span><br><span class="line">The key's randomart image is:</span><br><span class="line">+---[RSA 2048]----+</span><br><span class="line">|oo. .            |</span><br><span class="line">|o... o  +        |</span><br><span class="line">|. .o  o+.o       |</span><br><span class="line">|.++++. +o+o..    |</span><br><span class="line">|o.+*=.o.SEoo=    |</span><br><span class="line">| .  o+.*...+ +   |</span><br><span class="line">|   .. + +.  +    |</span><br><span class="line">|     + .     .   |</span><br><span class="line">|      ...        |</span><br><span class="line">+----[SHA256]-----+</span><br><span class="line"></span><br><span class="line">공개키 확인</span><br><span class="line"><span class="meta">$</span> cat id_rsa.pub</span><br><span class="line">ssh-rsa AAAAB3Nza~~~~~~~~eQKcx8B6uAflRm1J8In1 user@hostname</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>슬레이브 서버에서 마스터 서버에서 만든 공개키를 등록<br>슬레이브 서버에서는 마스터 서버에서 SSH 접속을 허용해야 하기때문에 마스터 서버에서 생성한 공개키를 등록해준다. 슬레이브 서버의 홈 디렉토리 하위 .ssh 폴더아래 파일을 만들고 위 공개키를 넣어주자.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> vi authorized_keys</span><br><span class="line">ssh-rsa AAAAB3Nza~~~~~~~~eQKcx8B6uAflRm1J8In1 user@hostname</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Jenkins 에서 Credentials 을 만들때 Private Key 설정을 “From the Jenkins master ~/.ssh”으로 설정한다. 나중에 이 정보로 인증을 처리한다.</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="jenkins_upgrade_3.jpg" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="jenkins_upgrade_3.jpg" alt=""></a></div>
+</li>
+</ol>
+<ol start="4">
+<li>노드를 추가하고 조금 있으면 마스터 노드가 슬레이브 서버에 에이전트를 설치/실행하고 연동이 된것을 확인할수 있다.<div class="figure center" style="width:;"><a class="fancybox" href="jenkins_upgrade_4.jpg" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="jenkins_upgrade_4.jpg" alt=""></a></div>
+실제로 슬레이브 서버에서 프로세스를 확인하면 아래처럼 에이전트( slave.jar )가 설치/실행되고 있는것을 확인할수 있다.<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ ps -ef | grep java</span><br><span class="line">user   105431 105288  0 01:03 ?        00:00:00 bash -c cd &quot;/home&quot; &amp;&amp; java  -jar slave.jar</span><br><span class="line">user   105463 105431  3 01:03 ?        00:00:08 java -jar slave.jar</span><br><span class="line">$ ls</span><br><span class="line">slave.jar logs scripts</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>위와 같은 방법으로 슬레이브 서버를 총 두개를 구성하고 job을 여러개 실행하게 하면 자동으로(랜덤으로) 분배되어 실행하는것을 확인할 수 있다.<br><div class="figure center" style="width:;"><a class="fancybox" href="jenkins_node_job_execute.jpg" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="jenkins_node_job_execute.jpg" alt=""></a></div></p>
+<p>특정 job은 특정 슬레이브 서버에서 실행하고 싶은 경우도 있다. 예로들어 특정 슬레이브 서버가 성능이 더 좋다거나 ACL이 특정 슬레이브 서버만 오픈되었다거나… 그럴경우에는 아래처럼 job 실행설정에서 슬레이브를 강제로 지정할수도 있다. (짱…)<br><div class="figure center" style="width:;"><a class="fancybox" href="execute_target_node.jpg" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="execute_target_node.jpg" alt=""></a></div></p>
+<h3 id="Jenkins-분산환경에서-버전-업그레이드-하기"><a href="#Jenkins-분산환경에서-버전-업그레이드-하기" class="headerlink" title="# Jenkins 분산환경에서 버전 업그레이드 하기"></a># Jenkins 분산환경에서 버전 업그레이드 하기</h3><p>이제 위에서 했던것들의 종합 세트인 “Master-Slave로 되어있는 구성에서의 Jenkins 업그레이드” 를 해보자.  우선 위에서 했던것처럼 구버전으로 Master-Slave 를 구성한다.<br>이제부터가 중요한데 필자는 당연히 위에서 했던 업그레이드 방법처럼 (이렇게 노드가 연결되어있는 상황에서) 기존의 war을 교체하면 되겠거니 했다. 하지만 업그레이드는 되었으나 노드가 연결이 안되면서 너무나도 다양한(?)에러를 만나야만 했다. 에러 내용을 찾아보니 필자처럼 버전 업그레이드를 하며 예외상황이 발생해 에러가 나는 경우가 많았고 삽질을 거듭해본 결과 다음과 같은 방법으로 하면 업그레이드도 되고 노드도 연결이 가능한것을 확인할 수 있었다. (다른 더 좋은 방법이 있다면 알고싶다… )</p>
+<ol>
+<li>우선 기존에 추가해둔 노드들을 제거한다.</li>
+<li>그 다음 위에서 했던것처럼 war를 교체하며 업그레이드를 진행한다.</li>
+<li>Credentials 항목에 보면 개인키가 있는것을 볼수 있다. (기존에는 “From the Jenkins master ~/.ssh”항목이 있었는데 없어졌다. )</li>
+<li>위에서 했던것처럼 노드를 추가해준다. 그럼 다음과 같은 에러를 만날수 있는데 에러 내용을 보면 known_hosts 파일이 없다고 나온다. 뭔가 해결할수 있을것만 같은 느낌이 든다. master 서버에서 <code>ssh 슬레이브서버주소</code> 명령어를 실행해서 known_hosts 파일을 생성하도록 해준다.<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> pwd</span><br><span class="line">/home/.ssh</span><br><span class="line"><span class="meta">$</span> ls</span><br><span class="line">id_rsa  id_rsa.pub</span><br><span class="line"><span class="meta">$</span> ssh slave-host</span><br><span class="line">The authenticity of host 'slave-host (0.0.0.0)' can't be established.</span><br><span class="line">ECDSA key fingerprint is SHA256:0zb~~~~~B1A.</span><br><span class="line">ECDSA key fingerprint is MD5:~~~~:87.</span><br><span class="line">Are you sure you want to continue connecting (yes/no)? yes</span><br><span class="line">Warning: Permanently added 'slave-host,0.0.0.0' (ECDSA) to the list of known hosts.</span><br><span class="line">Last login: Thu Mar 14 13:30:04 2019 from 10.113.219.197</span><br><span class="line">[user@slave-host ~]$ exit</span><br><span class="line">logout</span><br><span class="line">Connection to slave-host closed.</span><br><span class="line"><span class="meta">$</span> ls</span><br><span class="line">id_rsa  id_rsa.pub  known_hosts</span><br><span class="line"><span class="meta">$</span> cat known_hosts</span><br><span class="line">slave-host,0.0.0.0 ~~~ AAAA~~~~~~~8=</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="final_upgrade.jpg" title="업그레이드 후 노드 구성한 화면" data-caption="업그레이드 후 노드 구성한 화면" data-fancybox="default"><img class="fig-img" src="final_upgrade.jpg" alt="업그레이드 후 노드 구성한 화면"><span class="image-caption">업그레이드 후 노드 구성한 화면</span></a><span class="caption">업그레이드 후 노드 구성한 화면</span></div>
+<h3 id="마치며"><a href="#마치며" class="headerlink" title="# 마치며"></a># 마치며</h3><p>“Master-Slave로 되어있는 구성에서의 Jenkins 업그레이드”를 하며 정말 많은 시간을 할애할 수 밖에 없었고 (관련 지식도 없고 경험도 없었으니… ) 너무 안되어 포기할까도 싶었다. 하지만 경험하지 않은 모든 일들은 다 그만큼의 고통이 필요하고, 그 고통이 있어야지만 비로소 내것이 된다는 생각을 하고 있다. 이것도 나만의 무기가 되어 나중에 jenkins 를 업그레이드 한다거나 노드구성을 할때 보다 쉽고 빠르게 할수있지 않을까 기대를 해본다. 더불어 어려운 이야기이지만 삽질도 올바른 삽질을 할수 있도록 소망해본다…<br><div class="figure center" style="width:;"><a class="fancybox" href="spadework.gif" title="이런 삽질은 그만... <br>출처 : https://gfycat.com/ko/illiterateonlyicelandgull" data-caption="이런 삽질은 그만... <br>출처 : https://gfycat.com/ko/illiterateonlyicelandgull" data-fancybox="default"><img class="fig-img" src="spadework.gif" alt="이런 삽질은 그만... <br>출처 : https://gfycat.com/ko/illiterateonlyicelandgull"><span class="image-caption">이런 삽질은 그만... <br>출처 : https://gfycat.com/ko/illiterateonlyicelandgull</span></a><span class="caption">이런 삽질은 그만... <br>출처 : https://gfycat.com/ko/illiterateonlyicelandgull</span></div></p>
+
+            
+
+        </div>
+    </div>
+    <style>.bmc-button img{width: 27px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{line-height: 36px !important;height:37px !important;text-decoration: none !important;display:inline-flex !important;color:#000000 !important;background-color:#FFDD00 !important;border-radius: 3px !important;border: 1px solid transparent !important;padding: 1px 9px !important;font-size: 22px !important;letter-spacing: 0.6px !important;box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;margin: 0 auto !important;font-family:'Cookie', cursive !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;-o-transition: 0.3s all linear !important;-webkit-transition: 0.3s all linear !important;-moz-transition: 0.3s all linear !important;-ms-transition: 0.3s all linear !important;transition: 0.3s all linear !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#000000 !important;}</style><link href="https://fonts.googleapis.com/css?family=Cookie" rel="stylesheet"><center><a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/taetaetae"><img src="https://www.buymeacoffee.com/assets/img/BMC-btn-logo.svg" alt="Buy me a coffee"><span style="margin-left:5px">Buy me a coffee</span></a></center>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/jenkins/">jenkins</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/02/17/daily-dev-blog-3/" data-tooltip="기술블로그 구독서비스 개발 후기 - 3부" aria-label="NEXT: 기술블로그 구독서비스 개발 후기 - 3부">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/02/17/daily-dev-blog-3/" data-tooltip="기술블로그 구독서비스 개발 후기 - 3부" aria-label="NEXT: 기술블로그 구독서비스 개발 후기 - 3부">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2019/03/17/jenkins-upgrade-master-slave/';
+                 
+                    this.page.identifier = '2019/03/17/jenkins-upgrade-master-slave/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>
