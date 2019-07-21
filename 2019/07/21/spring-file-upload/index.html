@@ -1,0 +1,589 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>스프링을 활용한 파일 업로드 구현 (대용량 파일을 고려하자!) - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"개발을 하다보면 실제로 직접 구현을 해본건 아니지만 여기저기서 들어본 지식과 그 동안의 짬밥(?)으로 추측해볼수 있는 부분들이 있다. 물론 모든일에 정답은 없겠지만 요즘 느끼는건 책에서 공부만 해본것과 다른 블로그들에서 눈으로만 보고 넘어가는것들 그리고 실제로 손가락을 움직여가며 왜 여기서는 이 방법을 사용하지 고민하면서 구현을 해본다는건 정말 엄청나게 큰 차이가 있는것 같다. 웹 어플리케이션을 개발하다보면 한번 쯤 만나게 되는 파일 업로드. 필자도 몇번 구현은 해봤지만 그냥 단순히 구현만 해본 상태였다가 최근에 그냥 파일 업로드가 아닌 대용량 파일 업로드에서의 문제가 발생하여 여기저기 삽질을 하게 되어 삽질을 정리도 해볼겸 스프링에서의 파일 업로드에 대해 정리를 해보려고 한다.\n\n물론 구글에서 검색을 해보면 아마 필자가 쓴것 보다 더 자세하고 좋은 글들이 있겠지만 필자는 보다 대용량에 집중에서 작성해 보고자 한다. 명심하자. 아무리 흐린 잉크라도 좋은 기억력보다 낫다 라는 말이 있듯이\n\n# 스프링을 활용한 파일 업로드 구현우선 완전 초기상태에서 시작하기 위해 스프링 부트 프로젝트를 만들고 아주 간단하게 파일 업로드를 할수있는 form 과 업로드 버튼을 눌렀을때 작동하게되는 컨트롤러를 만들어 보자.12345678910111213141516171819202122232425262728293031323334353637import java.io.File;import java.io.IOException;import java.io.InputStream;import org.apache.commons.io.FileUtils;import org.springframework.stereotype.Controller;import org.springframework.web.bind.annotation.RequestMapping;import org.springframework.web.bind.annotation.RequestMethod;import org.springframework.web.bind.annotation.RequestParam;import org.springframework.web.multipart.MultipartFile;import lombok.extern.slf4j.Slf4j;@Slf4j@Controllerpublic class FileUploadController &#123;\t// 너무 간단 ...\t@RequestMapping(\"/form\")\tpublic String form() &#123;\t\treturn \"form\";\t&#125;\t@RequestMapping(value = \"/upload\", method = RequestMethod.POST)\tpublic String upload(@RequestParam(\"file\") MultipartFile multipartFile) &#123;\t\tlog.info(\"### upload\");\t\tFile targetFile = new File(\"/home1/irteam/\" + multipartFile.getOriginalFilename());\t\ttry &#123;\t\t\tInputStream fileStream = multipartFile.getInputStream();\t\t\tFileUtils.copyInputStreamToFile(fileStream, targetFile);\t\t&#125; catch (IOException e) &#123;\t\t\tFileUtils.deleteQuietly(targetFile);\t\t\te.printStackTrace();\t\t&#125;\t\treturn \"redirect:/form\";\t&#125;&#125;\nupload 요청이 들어오면 file이라는 이름의 MultipartFile을 받고 파일의 이름을 확인후 스트림을 읽어 특정 경로에 저장하는 로직이다. 그다음 /form을 접속하게 되면 나오는 폼 화면을 만들자. 이것도 아주 심플하게 !12345&lt;h1&gt;파일 업로드&lt;/h1&gt;&lt;form action=\"/upload\" method=\"post\" enctype=\"multipart/form-data\"&gt;\t&lt;input type=\"file\" value=\"파일 선택\" name=\"file\"/&gt;\t&lt;input type=\"submit\" value=\"업로드\"/&gt;&lt;/form&gt;\nmultipart/form-data 라는 Content-Type 을 명시해주고 파일을 선택하면 /upload로 POST요청을 호출하도록 설정한다. 이렇게 되면 너무 간단하게 + 이상없이 파일이 업로드가 잘 되니 이게 이야기 할 꺼리인가(?) 싶을정도로 심플하다.\n# 대용량 파일이라면?왠지 파일의 용량이 크면 문제있을것 같은데... 설마 용량이 크겠어?...출처 : https://m.blog.naver.com/naibbo0407/30170815180왠지 파일의 용량이 크면 문제있을것 같은데... 설마 용량이 크겠어?...출처 : https://m.blog.naver.com/naibbo0407/30170815180\n개발을 하다보면 항상 생각해야할 부분중에 하나가 바로 확장성과 범용성인것 같다. 이 부분에서 역시 문제가 되었던 것. 평소보다 용량이 큰 파일이 업로드가 되면서 (평소 3~400MB 였다가 3~4GB정도의 파일이 업로드가 되는 매직) 업로드가 안되는 상황이 발생하였다. 당연히 문제가 발생하면 누군가 말했듯 로그부터 살펴보았는데 Apache - (AJP) - Tomcat 으로 구성된 환경에서 tomcat 로그에 ### upload라는 로그가 없고 아파치 로그엔 502 에러가 발생한 것 이었다. 왜 톰켓 로그도 안남고 그전에 에러가 발생하였을까?이때부터 (근거없는 추측을 하며…) 고난과 역경의 삽질을 하기 시작하게 된다. 톰켓 버전이 문제일까? 로그가 안찍혔다면 다른 필터나 인터셉터에서 무언가를 먹고(?)있는건 아닐까? 잠깐, 근데 원래 대용량 업로드가 되긴 해? 파일 업로드/다운로드 하는 사이트 보면 별도 프로그램으로 하던데… 결국 문제는 메모리에 있었다.파일을 업로드 하게 되면 해당 내용을 메모리에 담게 되고 다 담은 후 메모리에 있는 내용을 was에 전달한 뒤 HttpServletRequest 로 넘어오게 된다.(Apache &gt; Tomcat) 그런데 파일을 업로드 하면서 메모리에 파일이 써지다가 메모리 부족으로 OOM이 발생하게 되버린 것이다. 또한 스프링 파일 최대크기를 별도로 지정하지 않고 있었기 때문에 메모리가 남아있었다고 해도 에러가 발생했을 상황이었다. ( https://spring.io/guides/gs/uploading-files/ 참조 )12spring.servlet.multipart.max-file-sizespring.servlet.multipart.max-request-size\n그러다보니 웹 서버인 아파치에서는 was 에러인 503이 아닌 502라고 에러를 발생하던 것이였고 지나고 보면 정말 아무것도 아닌 간단한 설정들을 놓친 문제였는데 꽤나 긴 시간을 허비해야만 했던 안타깝지만 보람찼던 (응?) 트러블 슈팅이었다.\n# 무엇이 정답일까legacy 로직이다보니 was가 파일 업로드 처리를 하게 되었는데 가급적이면 was가 처리하는것 보다는 static 파일을 처리할 수 있는 별도의 웹서버를 만드는게 어떨까 생각이 든다. (조금 알아보니 nodejs 모듈인 multer 라는게 있다.) 물론 파일 업로드 한 뒤에 별도의 로직을 처리하려면 was가 관여를 해야겠지만 이 부분은 설계를 어떻게 하냐에 따라 충분히 해결할 수 있을것으로 보인다. (파일을 업로드 하고 비동기로 was에서 처리를 한다거나 등…)더불어 항상 어플리케이션을 만들때에는 예외처리라는 것을 생각하면서 개발해야한다고 느끼게 되었다. NPE 같은 사소한 로직에서의 예외처리부터 파일 업로드시 서버의 메모리를 생각할수 있는 시야. 이런게 경험이 아닐까 싶다.또한 (잘 돌아가니까) 환경설정 값을 수정하지 않고 배포하는 것보단 가급적 어떤 설정값들에 의해서 어플리케이션이 돌아가는지 (특히 스프링 같은 프레임워크의 도움을 받는다면) 설정값들을 수정하여 성능에 이득을 취할 부분들은 없는지 꼼꼼하게 개발하는 습관을 길러야 할 것 같다.\n","dateCreated":"2019-07-21T22:09:58+09:00","dateModified":"2019-07-21T23:10:25+09:00","datePublished":"2019-07-21T22:09:58+09:00","description":"개발을 하다보면 실제로 직접 구현을 해본건 아니지만 여기저기서 들어본 지식과 그 동안의 짬밥(?)으로 추측해볼수 있는 부분들이 있다. 물론 모든일에 정답은 없겠지만 요즘 느끼는건 책에서 공부만 해본것과 다른 블로그들에서 눈으로만 보고 넘어가는것들 그리고 실제로 손가락을 움직여가며 왜 여기서는 이 방법을 사용하지 고민하면서 구현을 해본다는건 정말 엄청나게 큰 차이가 있는것 같다.","headline":"스프링을 활용한 파일 업로드 구현 (대용량 파일을 고려하자!)","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2019/07/21/spring-file-upload/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2019/07/21/spring-file-upload/"}</script>
+    <meta name="description" content="개발을 하다보면 실제로 직접 구현을 해본건 아니지만 여기저기서 들어본 지식과 그 동안의 짬밥(?)으로 추측해볼수 있는 부분들이 있다. 물론 모든일에 정답은 없겠지만 요즘 느끼는건 책에서 공부만 해본것과 다른 블로그들에서 눈으로만 보고 넘어가는것들 그리고 실제로 손가락을 움직여가며 왜 여기서는 이 방법을 사용하지 고민하면서 구현을 해본다는건 정말 엄청나게 큰">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="스프링을 활용한 파일 업로드 구현 (대용량 파일을 고려하자!)">
+<meta property="og:url" content="https://taetaetae.github.io/2019/07/21/spring-file-upload/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="개발을 하다보면 실제로 직접 구현을 해본건 아니지만 여기저기서 들어본 지식과 그 동안의 짬밥(?)으로 추측해볼수 있는 부분들이 있다. 물론 모든일에 정답은 없겠지만 요즘 느끼는건 책에서 공부만 해본것과 다른 블로그들에서 눈으로만 보고 넘어가는것들 그리고 실제로 손가락을 움직여가며 왜 여기서는 이 방법을 사용하지 고민하면서 구현을 해본다는건 정말 엄청나게 큰">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-07-21T14:10:25.415Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="스프링을 활용한 파일 업로드 구현 (대용량 파일을 고려하자!)">
+<meta name="twitter:description" content="개발을 하다보면 실제로 직접 구현을 해본건 아니지만 여기저기서 들어본 지식과 그 동안의 짬밥(?)으로 추측해볼수 있는 부분들이 있다. 물론 모든일에 정답은 없겠지만 요즘 느끼는건 책에서 공부만 해본것과 다른 블로그들에서 눈으로만 보고 넘어가는것들 그리고 실제로 손가락을 움직여가며 왜 여기서는 이 방법을 사용하지 고민하면서 구현을 해본다는건 정말 엄청나게 큰">
+<meta name="twitter:image" content="https://taetaetae.github.io/2019/07/21/spring-file-upload/omg.jpg">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    
+    
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>    
+    <ins class="adsbygoogle"
+   style="display:inline-block;max-width:250px;width:100%;max-height:380px;height:100%"
+   data-ad-client="ca-pub-5788330009690816">
+</ins>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            스프링을 활용한 파일 업로드 구현 (대용량 파일을 고려하자!)
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-07-21T22:09:58+09:00">
+	
+		    Jul 21, 2019
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>개발을 하다보면 실제로 직접 구현을 해본건 아니지만 여기저기서 들어본 지식과 그 동안의 짬밥(?)으로 추측해볼수 있는 부분들이 있다. 물론 모든일에 정답은 없겠지만 요즘 느끼는건 책에서 공부만 해본것과 다른 블로그들에서 눈으로만 보고 넘어가는것들 그리고 실제로 손가락을 움직여가며 왜 여기서는 이 방법을 사용하지 고민하면서 구현을 해본다는건 정말 엄청나게 큰 차이가 있는것 같다. <a id="more"></a><br>웹 어플리케이션을 개발하다보면 한번 쯤 만나게 되는 <code>파일 업로드</code>. 필자도 몇번 구현은 해봤지만 그냥 단순히 <code>구현</code>만 해본 상태였다가 최근에 그냥 파일 업로드가 아닌 <code>대용량</code> 파일 업로드에서의 문제가 발생하여 여기저기 삽질을 하게 되어 삽질을 정리도 해볼겸 스프링에서의 파일 업로드에 대해 정리를 해보려고 한다.</p>
+<blockquote>
+<p>물론 구글에서 검색을 해보면 아마 필자가 쓴것 보다 더 자세하고 좋은 글들이 있겠지만 필자는 보다 <code>대용량</code>에 집중에서 작성해 보고자 한다. 명심하자. 아무리 흐린 잉크라도 좋은 기억력보다 낫다 라는 말이 있듯이</p>
+</blockquote>
+<h3 id="스프링을-활용한-파일-업로드-구현"><a href="#스프링을-활용한-파일-업로드-구현" class="headerlink" title="# 스프링을 활용한 파일 업로드 구현"></a># 스프링을 활용한 파일 업로드 구현</h3><p>우선 완전 초기상태에서 시작하기 위해 스프링 부트 프로젝트를 만들고 아주 간단하게 파일 업로드를 할수있는 form 과 업로드 버튼을 눌렀을때 작동하게되는 컨트롤러를 만들어 보자.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.File;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStream;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.commons.io.FileUtils;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Controller;</span><br><span class="line"><span class="keyword">import</span> org.springframework.web.bind.annotation.RequestMapping;</span><br><span class="line"><span class="keyword">import</span> org.springframework.web.bind.annotation.RequestMethod;</span><br><span class="line"><span class="keyword">import</span> org.springframework.web.bind.annotation.RequestParam;</span><br><span class="line"><span class="keyword">import</span> org.springframework.web.multipart.MultipartFile;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> lombok.extern.slf4j.Slf4j;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Slf</span>4j</span><br><span class="line"><span class="meta">@Controller</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FileUploadController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 너무 간단 ...</span></span><br><span class="line">	<span class="meta">@RequestMapping</span>(<span class="string">"/form"</span>)</span><br><span class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">form</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">"form"</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@RequestMapping</span>(value = <span class="string">"/upload"</span>, method = RequestMethod.POST)</span><br><span class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">upload</span><span class="params">(@RequestParam(<span class="string">"file"</span>)</span> MultipartFile multipartFile) </span>&#123;</span><br><span class="line">		log.info(<span class="string">"### upload"</span>);</span><br><span class="line">		File targetFile = <span class="keyword">new</span> File(<span class="string">"/home1/irteam/"</span> + multipartFile.getOriginalFilename());</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			InputStream fileStream = multipartFile.getInputStream();</span><br><span class="line">			FileUtils.copyInputStreamToFile(fileStream, targetFile);</span><br><span class="line">		&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">			FileUtils.deleteQuietly(targetFile);</span><br><span class="line">			e.printStackTrace();</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">"redirect:/form"</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>upload</code> 요청이 들어오면 <code>file</code>이라는 이름의 <code>MultipartFile</code>을 받고 파일의 이름을 확인후 스트림을 읽어 특정 경로에 저장하는 로직이다. 그다음 <code>/form</code>을 접속하게 되면 나오는 폼 화면을 만들자. 이것도 아주 심플하게 !<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">h1</span>&gt;</span>파일 업로드<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">form</span> <span class="attr">action</span>=<span class="string">"/upload"</span> <span class="attr">method</span>=<span class="string">"post"</span> <span class="attr">enctype</span>=<span class="string">"multipart/form-data"</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"file"</span> <span class="attr">value</span>=<span class="string">"파일 선택"</span> <span class="attr">name</span>=<span class="string">"file"</span>/&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">value</span>=<span class="string">"업로드"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p><code>multipart/form-data</code> 라는 Content-Type 을 명시해주고 파일을 선택하면 <code>/upload</code>로 POST요청을 호출하도록 설정한다. 이렇게 되면 너무 간단하게 + 이상없이 파일이 업로드가 잘 되니 이게 이야기 할 꺼리인가(?) 싶을정도로 심플하다.</p>
+<h3 id="대용량-파일이라면"><a href="#대용량-파일이라면" class="headerlink" title="# 대용량 파일이라면?"></a># 대용량 파일이라면?</h3><div class="figure center" style="width:;"><a class="fancybox" href="omg.jpg" title="왠지 파일의 용량이 크면 문제있을것 같은데... 설마 용량이 크겠어?...<br>출처 : https://m.blog.naver.com/naibbo0407/30170815180" data-caption="왠지 파일의 용량이 크면 문제있을것 같은데... 설마 용량이 크겠어?...<br>출처 : https://m.blog.naver.com/naibbo0407/30170815180" data-fancybox="default"><img class="fig-img" src="omg.jpg" alt="왠지 파일의 용량이 크면 문제있을것 같은데... 설마 용량이 크겠어?...<br>출처 : https://m.blog.naver.com/naibbo0407/30170815180"><span class="image-caption">왠지 파일의 용량이 크면 문제있을것 같은데... 설마 용량이 크겠어?...<br>출처 : https://m.blog.naver.com/naibbo0407/30170815180</span></a><span class="caption">왠지 파일의 용량이 크면 문제있을것 같은데... 설마 용량이 크겠어?...<br>출처 : https://m.blog.naver.com/naibbo0407/30170815180</span></div><div style="clear:both;"></div>
+<p>개발을 하다보면 항상 생각해야할 부분중에 하나가 바로 확장성과 범용성인것 같다. 이 부분에서 역시 문제가 되었던 것. 평소보다 용량이 큰 파일이 업로드가 되면서 (평소 3~400MB 였다가 3~4GB정도의 파일이 업로드가 되는 매직) 업로드가 안되는 상황이 발생하였다. 당연히 문제가 발생하면 누군가 말했듯 로그부터 살펴보았는데 Apache - (AJP) - Tomcat 으로 구성된 환경에서 tomcat 로그에 <code>### upload</code>라는 로그가 없고 아파치 로그엔 <code>502 에러</code>가 발생한 것 이었다. 왜 톰켓 로그도 안남고 그전에 에러가 발생하였을까?<br>이때부터 (근거없는 추측을 하며…) 고난과 역경의 삽질을 하기 시작하게 된다. 톰켓 버전이 문제일까? 로그가 안찍혔다면 다른 필터나 인터셉터에서 무언가를 먹고(?)있는건 아닐까? 잠깐, 근데 원래 대용량 업로드가 되긴 해? 파일 업로드/다운로드 하는 사이트 보면 별도 프로그램으로 하던데… 결국 문제는 <code>메모리</code>에 있었다.<br>파일을 업로드 하게 되면 해당 내용을 메모리에 담게 되고 다 담은 후 메모리에 있는 내용을 was에 전달한 뒤 HttpServletRequest 로 넘어오게 된다.(Apache &gt; Tomcat) 그런데 파일을 업로드 하면서 메모리에 파일이 써지다가 메모리 부족으로 OOM이 발생하게 되버린 것이다. 또한 스프링 파일 최대크기를 별도로 지정하지 않고 있었기 때문에 메모리가 남아있었다고 해도 에러가 발생했을 상황이었다. ( <a href="https://spring.io/guides/gs/uploading-files/" target="_blank" rel="noopener">https://spring.io/guides/gs/uploading-files/</a> 참조 )<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">spring.servlet.multipart.max-file-size</span><br><span class="line">spring.servlet.multipart.max-request-size</span><br></pre></td></tr></table></figure></p>
+<p>그러다보니 웹 서버인 아파치에서는 was 에러인 <code>503</code>이 아닌 <code>502</code>라고 에러를 발생하던 것이였고 지나고 보면 정말 아무것도 아닌 간단한 설정들을 놓친 문제였는데 꽤나 긴 시간을 허비해야만 했던 안타깝지만 보람찼던 (응?) 트러블 슈팅이었다.</p>
+<h3 id="무엇이-정답일까"><a href="#무엇이-정답일까" class="headerlink" title="# 무엇이 정답일까"></a># 무엇이 정답일까</h3><p>legacy 로직이다보니 was가 파일 업로드 처리를 하게 되었는데 가급적이면 was가 처리하는것 보다는 static 파일을 처리할 수 있는 별도의 웹서버를 만드는게 어떨까 생각이 든다. (조금 알아보니 nodejs 모듈인 <a href="https://github.com/expressjs/multer" target="_blank" rel="noopener">multer</a> 라는게 있다.) 물론 파일 업로드 한 뒤에 별도의 로직을 처리하려면 was가 관여를 해야겠지만 이 부분은 설계를 어떻게 하냐에 따라 충분히 해결할 수 있을것으로 보인다. (파일을 업로드 하고 비동기로 was에서 처리를 한다거나 등…)<br>더불어 항상 어플리케이션을 만들때에는 <code>예외처리</code>라는 것을 생각하면서 개발해야한다고 느끼게 되었다. NPE 같은 사소한 로직에서의 예외처리부터 파일 업로드시 서버의 메모리를 생각할수 있는 시야. 이런게 경험이 아닐까 싶다.<br>또한 (잘 돌아가니까) 환경설정 값을 수정하지 않고 배포하는 것보단 가급적 어떤 설정값들에 의해서 어플리케이션이 돌아가는지 (특히 스프링 같은 프레임워크의 도움을 받는다면) 설정값들을 수정하여 성능에 이득을 취할 부분들은 없는지 꼼꼼하게 개발하는 습관을 길러야 할 것 같다.</p>
+
+            
+
+        </div>
+    </div>
+    <style>.bmc-button img{width: 27px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{line-height: 36px !important;height:37px !important;text-decoration: none !important;display:inline-flex !important;color:#000000 !important;background-color:#FFDD00 !important;border-radius: 3px !important;border: 1px solid transparent !important;padding: 1px 9px !important;font-size: 22px !important;letter-spacing: 0.6px !important;box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;margin: 0 auto !important;font-family:'Cookie', cursive !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;-o-transition: 0.3s all linear !important;-webkit-transition: 0.3s all linear !important;-moz-transition: 0.3s all linear !important;-ms-transition: 0.3s all linear !important;transition: 0.3s all linear !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#000000 !important;}</style><link href="https://fonts.googleapis.com/css?family=Cookie" rel="stylesheet"><center><a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/taetaetae"><img src="https://www.buymeacoffee.com/assets/img/BMC-btn-logo.svg" alt="Buy me a coffee"><span style="margin-left:5px">Buy me a coffee</span></a></center>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/07/07/review-first-half-2019/" data-tooltip="2019 상반기 리뷰 (feat. 글또)" aria-label="NEXT: 2019 상반기 리뷰 (feat. 글또)">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/07/21/spring-file-upload/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/07/21/spring-file-upload/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/07/21/spring-file-upload/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/07/07/review-first-half-2019/" data-tooltip="2019 상반기 리뷰 (feat. 글또)" aria-label="NEXT: 2019 상반기 리뷰 (feat. 글또)">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/07/21/spring-file-upload/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/07/21/spring-file-upload/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/07/21/spring-file-upload/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/07/21/spring-file-upload/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/07/21/spring-file-upload/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/07/21/spring-file-upload/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2019/07/21/spring-file-upload/';
+                 
+                    this.page.identifier = '2019/07/21/spring-file-upload/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>
