@@ -1,0 +1,656 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>아파치 로드밸런싱으로 여러 WAS 운영하기 - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"웹서버 하나만 사용하거나 WAS 하나만을 사용하며 웹서비스를 운영하는 경우는 극히 드물다. 웹서버의 장점과 WAS의 장점 그 두마리의 토끼를 다 잡기 위해 보통 앞단에 웹서버를 두고 그 뒤에 WAS를 두며 서비스를 운영하곤 한다. 헌데 운영하는 서비스가 인기가 많아져(?) 사용량이 많아지다면 그만큼 응답이 느려 (TPS 등) 서버를 늘려야 하는 상황이 생긴다고 가정해보자. (물론 서버를 늘리는 것보다 캐시를 적용하거나 로직을 바꿔보는 노력이 선행되야 하겠지만…) 당연히 서버부터 구매하며 “Scale Out”을 하려고 할것이다. 만약 원래 운영하던 서버가 너무 좋아서 CPU나 메모리 사용률이 거의 바닥이여도 서버를 구매해야 할까?서버를 구매하게되면 결국 두개 이상의 서버가 운영될텐데 그 서버들을 앞에서 묶어주며 트래픽을 분산시켜주는 무언가가 필요하다. 그러한 기술을 바로 로드밸런싱 이라고 한다. 통상 L4 스위치를 활용하여 요청을 여러 서버들로 분산시키며 산술적으로는 서버 대수만큼 성능이 좋아지는 효과를 볼 수 있다.하지만 앞서 말했듯 서버의 자원 사용률이 바닥일 정도로 거의 사용을 안할경우 서버를 구매하는건 너무나 비효율적이다. 이번 포스팅에서는 서버를 늘리지 않으면서 웹서버 중 아파치를 활용하여 여러 WAS를 운영하는 방법에 대해 알아보고자 한다. 서버 늘려야 하는 상황에서 사용해 볼 수 있는 나만의 좋은 무기(?)가 생긴게 아닐까 생각이 든다.\n아파치는 EOL이 되었기 때문에 2.4버전으로 설치하고, WAS는 편의상 톰켓 최신버전으로 설치해서 동일한 서버에 아파치 한대와 톰켓 3대를 연동하는것을 목적으로 한다. 로드밸런싱이 어떤식으로 이루어 지고 하위에 연결된 톰켓을 컨트롤 하는 방법 또한 알아볼 예정이다.\n\n서버 환경 및 설치하게 될 각 버전은 다음과 같다.서버 : CentOS 7.4 64Bitapache : httpd-2.4.39tomcat : apache-tomcat-8.5.43tomcat-connectors(mod_jk) : 1.2.46\n\n# Apache 와 Tomcat 설치필자의 포스팅에서 종종 나오는 부분이기도 하고, 구글링 해보면 바로 설치 방법을 쉽게 찾을 수 있겠지만 그렇다고 언급을 안하고 넘어가기엔 너무 불친절하니… 치트키처럼(?) 빠르게 정리해보자.\n\nApache1234567891011$ wget http://apache.tt.co.kr//httpd/httpd-2.4.39.tar.gz$ tar -zxvf httpd-2.4.39.tar.gz$ ./configure --prefix=/home/~~~/apache$ make &amp;&amp; make install$ cd /home/~~~/apache/bin$ sudo chown root:계정명 httpd$ sudo chmod +s httpd$ vi /home/~~~/apache/conf/httpd.confUser 계정명Grop 계정명$ /home/~~~/apache/bin/apachectl start ← 실행\n\n\n이렇게 설치를 한뒤 실행을 시키고 서버의 ip를 접속해보면 아래와 같은 화면을 볼 수 있다.\n\nTomcat123$ wget http://mirror.apache-kr.org/tomcat/tomcat-8/v8.5.43/bin/apache-tomcat-8.5.43.tar.gz$ tar -zxvf apache-tomcat-8.5.43.tar.gz$ /home/apache-tomcat-8.5.43/bin/start.sh ← 실행\n\n\n톰켓의 기본 http 포트인 8080으로 접속을 해보면 귀여운 고양이가 있는 톰켓 기본화면을 볼 수 있다.\n# 아파치와 톰켓 연동하기아파치와 톰켓의 연동은 mod_jk 와 mod_proxy 등 다양한 모듈로 연동을 할 수 있는데 이번 포스팅에서는 mod_jk 를 활용하는 방법에 대해 알아보고자 한다. 우선 mod_jk 를 설치하자.\n\n간단히 mod_jk 는 컴파일, 설정 등 복잡하지만 톰켓 전용 바이너리 프로토콜인 AJP를 사용하기 때문에 높은 성능을 기대할수가 있다. mod_proxy 는 반면 기본으로 아파치에 탑재되어있는 모듈이기 때문에 별도의 모듈 설치가 필요 없고 설정도 간단하다는 장점이 있다. 각 연동방식의 장단점이 있기 때문에 본인이 운영하는 서버 상황에 맞추어 적용 할 필요가 있다.\n\n\nmod_jk 설치123456$ wget http://apache.tt.co.kr/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.46-src.tar.gz$ tar -zxvf tomcat-connectors-1.2.46-src.tar.gz$ cd tomcat-connectors-1.2.46-src/native$ ./configure --with-apxs=/home/~~~/apache/bin/apxs$ make &amp;&amp; make install$ /home/~~~/apache/modules 하위에 mod_jk.so가 생김\n\n\nmod_jk 를 활용하면 AJP라는 통신으로 아파치와 톰켓이 연동되는데 톰켓의 기본 AJP 포트는 8009번임을 알고 다음처럼 설정을 해주자.\n\napache/conf/workers.properties\n12345worker.list=tomcat1worker.tomcat1.port=8009worker.tomcat1.host=localhostworker.tomcat1.type=ajp13worker.tomcat1.lbfactor=1\n\napache/conf/httpd.conf\n1234567LoadModule jk_module modules/mod_jk.so&lt;IfModule jk_module&gt;    JkWorkersFile    conf/workers.properties    JkLogFile        logs/mod_jk.log    JkLogLevel       info    JkMount /* \ttomcat1&lt;/IfModule&gt;\n\n\n이렇게 하고서 아파치와 톰켓을 재시작 후에 서버의 ip로 접속해보면 (별도의 port 없이) 톰켓 설정페이지로 랜딩이 되는것을 확인할 수 있다.\n# 로드밸런싱을 위한 작업여기까지는 본 포스팅을 작성하기 위한 밑거름이라고 말할 수 있다. 이제 실제로 로드밸런싱을 해볼 차례.앞서 톰켓 하나만 설치했는데 편의상 톰켓 3개를 설치해두자. (하나를 설치하고 cp -r 명령어를 활용하는게 빠르다.) 그 다음 각 톰켓의 모든 포트를 셋다 다르게 설정해야 하는데 겹치지 않도록 설정해 두고 (필자는 앞자리를 1,2,3 이런식으로 다르게 설정하였다.) 워커(workers.properties)를 아래처럼 설정해주자.\n\napache/conf/workers.properties12345678910111213141516171819worker.list=load_balancerworker.load_balancer.type=lbworker.load_balancer.balance_workers=tomcat1,tomcat2,tomcat3worker.tomcat1.port=18009worker.tomcat1.host=localhostworker.tomcat1.type=ajp13worker.tomcat1.lbfactor=1worker.tomcat2.port=28009worker.tomcat2.host=localhostworker.tomcat2.type=ajp13worker.tomcat2.lbfactor=1worker.tomcat3.port=38009worker.tomcat3.host=localhostworker.tomcat3.type=ajp13worker.tomcat3.lbfactor=1\n\n\n이렇게 설정을 한 뒤 앞서 설정한 httpd.conf 에 JkMount 부분도 아래처럼 변경해주자.\n\napache/conf/httpd.conf1JkMount /* load_balancer\n\n\n위 설정을 다시한번 살펴보자면, /*으로 들어오는 요청을 load_balancer라는 워커로 넘기는데 워커 설정에서는 로드밸런싱이 설정되어 있기 때문에 tomcat1, tomcat2, tomcat3 골고루 요청을 분산해준다는 의미이다.tomcat 하위 logs 폴더에 보면 아래 기본 설정에 의해 엑세스 로그가 로깅이 되는데123&lt;Valve className=&quot;org.apache.catalina.valves.AccessLogValve&quot; directory=&quot;logs&quot;               prefix=&quot;localhost_access_log&quot; suffix=&quot;.txt&quot;               pattern=&quot;%h %l %u %t &amp;quot;%r&amp;quot; %s %b&quot; /&gt;\n실제로 테스트를 해보면 다음처럼 9번의 요청을 3대의 톰켓에 골고루 요청된 것을 확인할 수 있다.\n# 로드밸런싱을 컨트롤 하기 (jkmanager)위에서 알아본 mod_jk 를 활용한 로드밸런싱을 별도의 서버 재시작 없이 컨트롤이 가능하다고 한다. 이게 어떤것을 의미하냐면 연동된 톰켓 3대중에 한대를 별도의 서버 셧다운을 하지 않아도 제외시킬수 있으며 반대로 다시 투입도 가능하다는 이야기이다. 이를 활용해보면 서비스 배포를 할 경우 위와 같은 설정이 되어있을때 제외 &gt; 배포 &gt; 투입하는 식으로 서비스가 무중단 상태에서 배포가 될수 있는 효과를 얻을 수 있다.설치는 별도로 하지 않아도 되고 mod_jk 모듈 내에 있기 때문에 별도의 설정만 추가해주면 된다.\n\napache/conf/httpd.conf\n1234567891011121314&lt;IfModule jk_module&gt;    JkWorkersFile    conf/workers.properties    JkLogFile        logs/mod_jk.log    JkLogLevel       info    JkMount /* load_balancer    &lt;Location /jkmanager/&gt;        JkMount jkstatus        Order deny,allow        Deny from all        Allow from 127.0.0.1        Allow from &#123;접근 가능한 IP&#125;    &lt;/Location&gt;&lt;/IfModule&gt;\n\napache/conf/workers.properties\n12worker.list=jkstatusworker.jkstatus.type=status\n\n\n설정에서 볼 수 있듯이 해당 설정은 다른측면에서는 상당히 취약점이 많은 부분이다. 해당 설정이 외부에 노출이 되어있다면 그 컨트롤을 서버 관리자가 아닌 다른 누군가가 할수 있기 때문에 꼭 Allow 설정으로 접근 제한을 해둬야 한다. 이렇게 하고 서버 IP/jkmanager/ 을 접속해보면 “JK Status Manager” 이라는 문구와 함께 아파치에 연동된 톰켓의 상태를 한눈에 파악할 수 있다.\n여기서 tomcat1 좌측에 있는 E(=edit)를 클릭하고 Activation 값을 “Disabled” 으로 바꿔본 뒤 앞서 테스트한 방법을 다시 해보면 tomcat1 에는 엑세스가 들어오지 않고 9번 엑세스가 골고루 tomca2 와 tomcat3 으로 로드밸런싱이 된것을 확인할 수 있다.\n# 마치며각 설정값들은 아무리 필자가 설명을 잘 해도 도큐먼트를 따라갈 수 없듯이 실제 각 도큐먼트를 보면서 설정값 하나하나를 조절해보며 운영하고 있는 서비스의 특징과 상황에 맞도록 맞춰가는것이 핵심일것 같다. (본 포스팅은 아주 가볍게 연동만 해보는 형태이고, 각 설정이나 워커들간의 우선순위 로드밸런싱 같은 경우는 직접 설정을 해가면서 확인이 필요하다. )사실 이부분은 머릿속으로는 어떻게 하는구나라고 알고만 있었는데 실제로 해보니 각 설정들이 어떤 의미이고 어떻게 조절하면 보다 더 좋은 성능이나 다양한 이득을 취할수 있을것 같다는 생각을 해본다.\n\n참고 링크https://tomcat.apache.org/connectors-doc/reference/workers.htmlhttps://tomcat.apache.org/connectors-doc/common_howto/loadbalancers.html\n\n","dateCreated":"2019-08-04T19:50:43+09:00","dateModified":"2019-08-04T22:16:39+09:00","datePublished":"2019-08-04T19:50:43+09:00","description":"웹서버 하나만 사용하거나 WAS 하나만을 사용하며 웹서비스를 운영하는 경우는 극히 드물다. 웹서버의 장점과 WAS의 장점 그 두마리의 토끼를 다 잡기 위해 보통 앞단에 웹서버를 두고 그 뒤에 WAS를 두며 서비스를 운영하곤 한다. 헌데 운영하는 서비스가 인기가 많아져(?) 사용량이 많아지다면 그만큼 응답이 느려 (TPS 등) 서버를 늘려야 하는 상황이 생긴다고 가정해보자.","headline":"아파치 로드밸런싱으로 여러 WAS 운영하기","image":["?.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2019/08/04/apache-load-balancing/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2019/08/04/apache-load-balancing/","keywords":"spring, fileupload","thumbnailUrl":"?.png"}</script>
+    <meta name="description" content="웹서버 하나만 사용하거나 WAS 하나만을 사용하며 웹서비스를 운영하는 경우는 극히 드물다. 웹서버의 장점과 WAS의 장점 그 두마리의 토끼를 다 잡기 위해 보통 앞단에 웹서버를 두고 그 뒤에 WAS를 두며 서비스를 운영하곤 한다. 헌데 운영하는 서비스가 인기가 많아져(?) 사용량이 많아지다면 그만큼 응답이 느려 (TPS 등) 서버를 늘려야 하는 상황이 생긴">
+<meta name="keywords" content="spring,fileupload">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="아파치 로드밸런싱으로 여러 WAS 운영하기">
+<meta property="og:url" content="https://taetaetae.github.io/2019/08/04/apache-load-balancing/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="웹서버 하나만 사용하거나 WAS 하나만을 사용하며 웹서비스를 운영하는 경우는 극히 드물다. 웹서버의 장점과 WAS의 장점 그 두마리의 토끼를 다 잡기 위해 보통 앞단에 웹서버를 두고 그 뒤에 WAS를 두며 서비스를 운영하곤 한다. 헌데 운영하는 서비스가 인기가 많아져(?) 사용량이 많아지다면 그만큼 응답이 느려 (TPS 등) 서버를 늘려야 하는 상황이 생긴">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-08-04T13:16:39.938Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="아파치 로드밸런싱으로 여러 WAS 운영하기">
+<meta name="twitter:description" content="웹서버 하나만 사용하거나 WAS 하나만을 사용하며 웹서비스를 운영하는 경우는 극히 드물다. 웹서버의 장점과 WAS의 장점 그 두마리의 토끼를 다 잡기 위해 보통 앞단에 웹서버를 두고 그 뒤에 WAS를 두며 서비스를 운영하곤 한다. 헌데 운영하는 서비스가 인기가 많아져(?) 사용량이 많아지다면 그만큼 응답이 느려 (TPS 등) 서버를 늘려야 하는 상황이 생긴">
+<meta name="twitter:image" content="https://taetaetae.github.io/2019/08/04/apache-load-balancing/apache_lb_test.jpg">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/2019/08/04/apache-load-balancing/?.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae.github.io/2019/08/04/apache-load-balancing/?.png" />
+    
+    
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>    
+    <ins class="adsbygoogle"
+   style="display:inline-block;max-width:250px;width:100%;max-height:380px;height:100%"
+   data-ad-client="ca-pub-5788330009690816">
+</ins>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            아파치 로드밸런싱으로 여러 WAS 운영하기
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-08-04T19:50:43+09:00">
+	
+		    Aug 04, 2019
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>웹서버 하나만 사용하거나 WAS 하나만을 사용하며 웹서비스를 운영하는 경우는 극히 드물다. 웹서버의 장점과 WAS의 장점 그 두마리의 토끼를 다 잡기 위해 보통 앞단에 웹서버를 두고 그 뒤에 WAS를 두며 서비스를 운영하곤 한다. 헌데 운영하는 서비스가 인기가 많아져(?) 사용량이 많아지다면 그만큼 응답이 느려 (TPS 등) 서버를 늘려야 하는 상황이 생긴다고 가정해보자.<a id="more"></a> (물론 서버를 늘리는 것보다 캐시를 적용하거나 로직을 바꿔보는 노력이 선행되야 하겠지만…) 당연히 서버부터 구매하며 “Scale Out”을 하려고 할것이다. 만약 원래 운영하던 서버가 너무 좋아서 CPU나 메모리 사용률이 거의 바닥이여도 서버를 구매해야 할까?<br>서버를 구매하게되면 결국 두개 이상의 서버가 운영될텐데 그 서버들을 앞에서 묶어주며 트래픽을 분산시켜주는 무언가가 필요하다. 그러한 기술을 바로 <code>로드밸런싱</code> 이라고 한다. 통상 L4 스위치를 활용하여 요청을 여러 서버들로 분산시키며 산술적으로는 서버 대수만큼 성능이 좋아지는 효과를 볼 수 있다.<br>하지만 앞서 말했듯 서버의 자원 사용률이 바닥일 정도로 거의 사용을 안할경우 서버를 구매하는건 너무나 비효율적이다. 이번 포스팅에서는 서버를 늘리지 않으면서 웹서버 중 아파치를 활용하여 여러 WAS를 운영하는 방법에 대해 알아보고자 한다. 서버 늘려야 하는 상황에서 사용해 볼 수 있는 나만의 좋은 무기(?)가 생긴게 아닐까 생각이 든다.</p>
+<p>아파치는 <a href="https://httpd.apache.org/#apache-httpd-22-end-of-life-2018-01-01" target="_blank" rel="noopener">EOL</a>이 되었기 때문에 2.4버전으로 설치하고, WAS는 편의상 톰켓 최신버전으로 설치해서 동일한 서버에 아파치 한대와 톰켓 3대를 연동하는것을 목적으로 한다. 로드밸런싱이 어떤식으로 이루어 지고 하위에 연결된 톰켓을 컨트롤 하는 방법 또한 알아볼 예정이다.</p>
+<blockquote>
+<p>서버 환경 및 설치하게 될 각 버전은 다음과 같다.<br>서버 : CentOS 7.4 64Bit<br>apache : httpd-2.4.39<br>tomcat : apache-tomcat-8.5.43<br>tomcat-connectors(mod_jk) : 1.2.46</p>
+</blockquote>
+<h3 id="Apache-와-Tomcat-설치"><a href="#Apache-와-Tomcat-설치" class="headerlink" title="# Apache 와 Tomcat 설치"></a># Apache 와 Tomcat 설치</h3><p>필자의 포스팅에서 종종 나오는 부분이기도 하고, 구글링 해보면 바로 설치 방법을 쉽게 찾을 수 있겠지만 그렇다고 언급을 안하고 넘어가기엔 너무 불친절하니… 치트키처럼(?) 빠르게 정리해보자.</p>
+<ul>
+<li>Apache<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ wget http://apache.tt.co.kr//httpd/httpd-2.4.39.tar.gz</span><br><span class="line">$ tar -zxvf httpd-2.4.39.tar.gz</span><br><span class="line">$ ./configure --prefix=/home/~~~/apache</span><br><span class="line">$ make &amp;&amp; make install</span><br><span class="line">$ cd /home/~~~/apache/bin</span><br><span class="line">$ sudo chown root:계정명 httpd</span><br><span class="line">$ sudo chmod +s httpd</span><br><span class="line">$ vi /home/~~~/apache/conf/httpd.conf</span><br><span class="line">User 계정명</span><br><span class="line">Grop 계정명</span><br><span class="line">$ /home/~~~/apache/bin/apachectl start ← 실행</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>이렇게 설치를 한뒤 실행을 시키고 서버의 ip를 접속해보면 아래와 같은 화면을 볼 수 있다.</p>
+<ul>
+<li>Tomcat<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ wget http://mirror.apache-kr.org/tomcat/tomcat-8/v8.5.43/bin/apache-tomcat-8.5.43.tar.gz</span><br><span class="line">$ tar -zxvf apache-tomcat-8.5.43.tar.gz</span><br><span class="line">$ /home/apache-tomcat-8.5.43/bin/start.sh ← 실행</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>톰켓의 기본 http 포트인 8080으로 접속을 해보면 귀여운 고양이가 있는 톰켓 기본화면을 볼 수 있다.</p>
+<h3 id="아파치와-톰켓-연동하기"><a href="#아파치와-톰켓-연동하기" class="headerlink" title="# 아파치와 톰켓 연동하기"></a># 아파치와 톰켓 연동하기</h3><p>아파치와 톰켓의 연동은 <code>mod_jk</code> 와 <code>mod_proxy</code> 등 다양한 모듈로 연동을 할 수 있는데 이번 포스팅에서는 <code>mod_jk</code> 를 활용하는 방법에 대해 알아보고자 한다. 우선 mod_jk 를 설치하자.</p>
+<blockquote>
+<p>간단히 mod_jk 는 컴파일, 설정 등 복잡하지만 톰켓 전용 바이너리 프로토콜인 AJP를 사용하기 때문에 높은 성능을 기대할수가 있다. mod_proxy 는 반면 기본으로 아파치에 탑재되어있는 모듈이기 때문에 별도의 모듈 설치가 필요 없고 설정도 간단하다는 장점이 있다. 각 연동방식의 장단점이 있기 때문에 본인이 운영하는 서버 상황에 맞추어 적용 할 필요가 있다.</p>
+</blockquote>
+<ul>
+<li>mod_jk 설치<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ wget http://apache.tt.co.kr/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.46-src.tar.gz</span><br><span class="line">$ tar -zxvf tomcat-connectors-1.2.46-src.tar.gz</span><br><span class="line">$ cd tomcat-connectors-1.2.46-src/native</span><br><span class="line">$ ./configure --with-apxs=/home/~~~/apache/bin/apxs</span><br><span class="line">$ make &amp;&amp; make install</span><br><span class="line">$ /home/~~~/apache/modules 하위에 mod_jk.so가 생김</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>mod_jk 를 활용하면 AJP라는 통신으로 아파치와 톰켓이 연동되는데 톰켓의 기본 AJP 포트는 8009번임을 알고 다음처럼 설정을 해주자.</p>
+<ul>
+<li><p>apache/conf/workers.properties</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">worker.list=tomcat1</span><br><span class="line">worker.tomcat1.port=8009</span><br><span class="line">worker.tomcat1.host=localhost</span><br><span class="line">worker.tomcat1.type=ajp13</span><br><span class="line">worker.tomcat1.lbfactor=1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>apache/conf/httpd.conf</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">LoadModule jk_module modules/mod_jk.so</span><br><span class="line">&lt;IfModule jk_module&gt;</span><br><span class="line">    JkWorkersFile    conf/workers.properties</span><br><span class="line">    JkLogFile        logs/mod_jk.log</span><br><span class="line">    JkLogLevel       info</span><br><span class="line">    JkMount /* 	tomcat1</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>이렇게 하고서 아파치와 톰켓을 재시작 후에 서버의 ip로 접속해보면 (별도의 port 없이) 톰켓 설정페이지로 랜딩이 되는것을 확인할 수 있다.</p>
+<h3 id="로드밸런싱을-위한-작업"><a href="#로드밸런싱을-위한-작업" class="headerlink" title="# 로드밸런싱을 위한 작업"></a># 로드밸런싱을 위한 작업</h3><p>여기까지는 본 포스팅을 작성하기 위한 밑거름이라고 말할 수 있다. 이제 실제로 로드밸런싱을 해볼 차례.<br>앞서 톰켓 하나만 설치했는데 편의상 톰켓 3개를 설치해두자. (하나를 설치하고 cp -r 명령어를 활용하는게 빠르다.) 그 다음 각 톰켓의 모든 포트를 셋다 다르게 설정해야 하는데 겹치지 않도록 설정해 두고 (필자는 앞자리를 1,2,3 이런식으로 다르게 설정하였다.) 워커(workers.properties)를 아래처럼 설정해주자.</p>
+<ul>
+<li>apache/conf/workers.properties<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">worker.list=load_balancer</span><br><span class="line"></span><br><span class="line">worker.load_balancer.type=lb</span><br><span class="line">worker.load_balancer.balance_workers=tomcat1,tomcat2,tomcat3</span><br><span class="line"></span><br><span class="line">worker.tomcat1.port=18009</span><br><span class="line">worker.tomcat1.host=localhost</span><br><span class="line">worker.tomcat1.type=ajp13</span><br><span class="line">worker.tomcat1.lbfactor=1</span><br><span class="line"></span><br><span class="line">worker.tomcat2.port=28009</span><br><span class="line">worker.tomcat2.host=localhost</span><br><span class="line">worker.tomcat2.type=ajp13</span><br><span class="line">worker.tomcat2.lbfactor=1</span><br><span class="line"></span><br><span class="line">worker.tomcat3.port=38009</span><br><span class="line">worker.tomcat3.host=localhost</span><br><span class="line">worker.tomcat3.type=ajp13</span><br><span class="line">worker.tomcat3.lbfactor=1</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>이렇게 설정을 한 뒤 앞서 설정한 httpd.conf 에 JkMount 부분도 아래처럼 변경해주자.</p>
+<ul>
+<li>apache/conf/httpd.conf<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">JkMount /* load_balancer</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>위 설정을 다시한번 살펴보자면, <code>/*</code>으로 들어오는 요청을 <code>load_balancer</code>라는 워커로 넘기는데 워커 설정에서는 로드밸런싱이 설정되어 있기 때문에 tomcat1, tomcat2, tomcat3 골고루 요청을 분산해준다는 의미이다.<br>tomcat 하위 logs 폴더에 보면 아래 기본 설정에 의해 엑세스 로그가 로깅이 되는데<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;Valve className=&quot;org.apache.catalina.valves.AccessLogValve&quot; directory=&quot;logs&quot;</span><br><span class="line">               prefix=&quot;localhost_access_log&quot; suffix=&quot;.txt&quot;</span><br><span class="line">               pattern=&quot;%h %l %u %t &amp;quot;%r&amp;quot; %s %b&quot; /&gt;</span><br></pre></td></tr></table></figure></p>
+<p>실제로 테스트를 해보면 다음처럼 9번의 요청을 3대의 톰켓에 골고루 요청된 것을 확인할 수 있다.<br><div class="figure center" style="width:;"><a class="fancybox" href="apache_lb_test.jpg" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="apache_lb_test.jpg" alt=""></a></div><div style="clear:both;"></div></p>
+<h3 id="로드밸런싱을-컨트롤-하기-jkmanager"><a href="#로드밸런싱을-컨트롤-하기-jkmanager" class="headerlink" title="# 로드밸런싱을 컨트롤 하기 (jkmanager)"></a># 로드밸런싱을 컨트롤 하기 (jkmanager)</h3><p>위에서 알아본 mod_jk 를 활용한 로드밸런싱을 별도의 서버 재시작 없이 <code>컨트롤</code>이 가능하다고 한다. 이게 어떤것을 의미하냐면 연동된 톰켓 3대중에 한대를 별도의 서버 셧다운을 하지 않아도 제외시킬수 있으며 반대로 다시 투입도 가능하다는 이야기이다. 이를 활용해보면 서비스 배포를 할 경우 위와 같은 설정이 되어있을때 제외 &gt; 배포 &gt; 투입하는 식으로 서비스가 무중단 상태에서 배포가 될수 있는 효과를 얻을 수 있다.<br>설치는 별도로 하지 않아도 되고 mod_jk 모듈 내에 있기 때문에 별도의 설정만 추가해주면 된다.</p>
+<ul>
+<li><p>apache/conf/httpd.conf</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule jk_module&gt;</span><br><span class="line">    JkWorkersFile    conf/workers.properties</span><br><span class="line">    JkLogFile        logs/mod_jk.log</span><br><span class="line">    JkLogLevel       info</span><br><span class="line">    JkMount /* load_balancer</span><br><span class="line"></span><br><span class="line">    &lt;Location /jkmanager/&gt;</span><br><span class="line">        JkMount jkstatus</span><br><span class="line">        Order deny,allow</span><br><span class="line">        Deny from all</span><br><span class="line">        Allow from 127.0.0.1</span><br><span class="line">        Allow from &#123;접근 가능한 IP&#125;</span><br><span class="line">    &lt;/Location&gt;</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>apache/conf/workers.properties</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">worker.list=jkstatus</span><br><span class="line">worker.jkstatus.type=status</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>설정에서 볼 수 있듯이 해당 설정은 다른측면에서는 상당히 취약점이 많은 부분이다. 해당 설정이 외부에 노출이 되어있다면 그 컨트롤을 서버 관리자가 아닌 다른 누군가가 할수 있기 때문에 꼭 Allow 설정으로 접근 제한을 해둬야 한다. 이렇게 하고 <code>서버 IP/jkmanager/</code> 을 접속해보면 “JK Status Manager” 이라는 문구와 함께 아파치에 연동된 톰켓의 상태를 한눈에 파악할 수 있다.<br><div class="figure center" style="width:;"><a class="fancybox" href="jk_status_manager.jpg" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="jk_status_manager.jpg" alt=""></a></div><div style="clear:both;"></div></p>
+<p>여기서 tomcat1 좌측에 있는 <code>E</code>(=edit)를 클릭하고 Activation 값을 “Disabled” 으로 바꿔본 뒤 앞서 테스트한 방법을 다시 해보면 tomcat1 에는 엑세스가 들어오지 않고 9번 엑세스가 골고루 tomca2 와 tomcat3 으로 로드밸런싱이 된것을 확인할 수 있다.<br><div class="figure center" style="width:;"><a class="fancybox" href="apache_lb_test_jkmanager.jpg" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="apache_lb_test_jkmanager.jpg" alt=""></a></div><div style="clear:both;"></div></p>
+<h3 id="마치며"><a href="#마치며" class="headerlink" title="# 마치며"></a># 마치며</h3><p>각 설정값들은 아무리 필자가 설명을 잘 해도 도큐먼트를 따라갈 수 없듯이 실제 각 도큐먼트를 보면서 설정값 하나하나를 조절해보며 운영하고 있는 서비스의 특징과 상황에 맞도록 맞춰가는것이 핵심일것 같다. (본 포스팅은 아주 가볍게 연동만 해보는 형태이고, 각 설정이나 워커들간의 우선순위 로드밸런싱 같은 경우는 직접 설정을 해가면서 확인이 필요하다. )<br>사실 이부분은 머릿속으로는 어떻게 하는구나라고 알고만 있었는데 실제로 해보니 각 설정들이 어떤 의미이고 어떻게 조절하면 보다 더 좋은 성능이나 다양한 이득을 취할수 있을것 같다는 생각을 해본다.</p>
+<ul>
+<li>참고 링크<br><a href="https://tomcat.apache.org/connectors-doc/reference/workers.html" target="_blank" rel="noopener">https://tomcat.apache.org/connectors-doc/reference/workers.html</a><br><a href="https://tomcat.apache.org/connectors-doc/common_howto/loadbalancers.html" target="_blank" rel="noopener">https://tomcat.apache.org/connectors-doc/common_howto/loadbalancers.html</a></li>
+</ul>
+
+            
+
+        </div>
+    </div>
+    <style>.bmc-button img{width: 27px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{line-height: 36px !important;height:37px !important;text-decoration: none !important;display:inline-flex !important;color:#000000 !important;background-color:#FFDD00 !important;border-radius: 3px !important;border: 1px solid transparent !important;padding: 1px 9px !important;font-size: 22px !important;letter-spacing: 0.6px !important;box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;margin: 0 auto !important;font-family:'Cookie', cursive !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;-o-transition: 0.3s all linear !important;-webkit-transition: 0.3s all linear !important;-moz-transition: 0.3s all linear !important;-ms-transition: 0.3s all linear !important;transition: 0.3s all linear !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#000000 !important;}</style><link href="https://fonts.googleapis.com/css?family=Cookie" rel="stylesheet"><center><span>이 글이 도움이 되셨다면 광고클릭 또는 아래 버튼으로 후원 부탁드립니다.</span><br><a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/taetaetae"><img src="https://www.buymeacoffee.com/assets/img/BMC-btn-logo.svg" alt="Buy me a coffee"><span style="margin-left:5px">Buy me a coffee</span></a></center>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/fileupload/">fileupload</a> <a class="tag tag--primary tag--small t-link" href="/tags/spring/">spring</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/07/21/spring-file-upload/" data-tooltip="스프링을 활용한 대용량 파일 업로드 구현" aria-label="NEXT: 스프링을 활용한 대용량 파일 업로드 구현">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/08/04/apache-load-balancing/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/08/04/apache-load-balancing/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/08/04/apache-load-balancing/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/07/21/spring-file-upload/" data-tooltip="스프링을 활용한 대용량 파일 업로드 구현" aria-label="NEXT: 스프링을 활용한 대용량 파일 업로드 구현">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/08/04/apache-load-balancing/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/08/04/apache-load-balancing/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/08/04/apache-load-balancing/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/08/04/apache-load-balancing/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/08/04/apache-load-balancing/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/08/04/apache-load-balancing/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2019/08/04/apache-load-balancing/';
+                 
+                    this.page.identifier = '2019/08/04/apache-load-balancing/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>

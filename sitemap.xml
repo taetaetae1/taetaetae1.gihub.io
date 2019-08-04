@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://taetaetae.github.io/2019/08/04/apache-load-balancing/</loc>
+    
+    <lastmod>2019-08-04T13:16:39.938Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://taetaetae.github.io/2019/07/21/spring-file-upload/</loc>
     
     <lastmod>2019-07-21T16:28:50.271Z</lastmod>
