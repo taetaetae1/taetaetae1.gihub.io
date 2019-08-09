@@ -13,7 +13,7 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"개요이전포스팅 에서 이야기 한것과 같이 어느곳에서든지(집 또는 회사 등) 블로그 포스팅을 할수 있는 환경을 만들고 싶었다. (git을 이용해서.)그래서 git repository 를 두개를 만들었고, 하나는 실제 블로그서버로 이용하고 하나는 블로그를 포스팅하는 hexo 환경을 저장하게 된다. 지금부터 이야기 할 내용은 hexo환경을 git repository 에서 pull 받아서 환경구성하는 부분을 이야기 하려고 한다.\n환경구성hexo설치와 git설치는 되어있다고 가정.먼저 구성할 폴더를 생성하고 이 폴더에 hexo 환경을 구성하겠다고 초기 셋팅을 한다12mkdir bloghexo init blog\n그리고 hexo환경을 저장해둔 repository를 가져와야 하므로 git설정을 한다1234cd blog/git initgit remote add origin https://github.com/taetaetae/hexo.gitgit fetch\n필요없는초기셋팅이 되는 파일은 지우고12rm source/_posts/hello-world.mdrm -r themes/landscape/ #해당 테마를 사용하고 있다면 지울필요가 없다.\nhexo환경 repository 를 pull받는다12git reset --hard origin/mastergit pull origin master\nhueman테마의 검색 기능을 사용한다는 가정하에 필요한 플러그인과, 나중에 deploy 할때 필요한 플러그인을 설치해준다12npm install hexo-deployer-git --savenpm install -S hexo-generator-json-content\n이렇게 되면 기존처럼 환경설정이 마무리 되고, 포스팅을 할수 있게 된다.\n# 추가\ncanonical 속성npm install –save hexo-auto-canonical\n사이트맵 속성npm install hexo-generator-seo-friendly-sitemap –save\nfeed 속성npm install hexo-generator-feed –save\n\n","dateCreated":"2016-09-23T10:26:53+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2016-09-23T10:26:53+09:00","description":"개요이전포스팅 에서 이야기 한것과 같이 어느곳에서든지(집 또는 회사 등) 블로그 포스팅을 할수 있는 환경을 만들고 싶었다. (git을 이용해서.)","headline":"hexo 환경 구축하기","image":[null,"hexo_github.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2016/09/23/20160923/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2016/09/23/20160923/","keywords":"hexo","thumbnailUrl":"hexo_github.jpg"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"개요이전포스팅 에서 이야기 한것과 같이 어느곳에서든지(집 또는 회사 등) 블로그 포스팅을 할수 있는 환경을 만들고 싶었다. (git을 이용해서.)그래서 git repository 를 두개를 만들었고, 하나는 실제 블로그서버로 이용하고 하나는 블로그를 포스팅하는 hexo 환경을 저장하게 된다. 지금부터 이야기 할 내용은 hexo환경을 git repository 에서 pull 받아서 환경구성하는 부분을 이야기 하려고 한다.\n환경구성hexo설치와 git설치는 되어있다고 가정.먼저 구성할 폴더를 생성하고 이 폴더에 hexo 환경을 구성하겠다고 초기 셋팅을 한다12mkdir bloghexo init blog\n그리고 hexo환경을 저장해둔 repository를 가져와야 하므로 git설정을 한다1234cd blog/git initgit remote add origin https://github.com/taetaetae/hexo.gitgit fetch\n필요없는초기셋팅이 되는 파일은 지우고12rm source/_posts/hello-world.mdrm -r themes/landscape/ #해당 테마를 사용하고 있다면 지울필요가 없다.\nhexo환경 repository 를 pull받는다12git reset --hard origin/mastergit pull origin master\nhueman테마의 검색 기능을 사용한다는 가정하에 필요한 플러그인과, 나중에 deploy 할때 필요한 플러그인을 설치해준다12npm install hexo-deployer-git --savenpm install -S hexo-generator-json-content\n이렇게 되면 기존처럼 환경설정이 마무리 되고, 포스팅을 할수 있게 된다.\n# 추가\ncanonical 속성npm install –save hexo-auto-canonical\n사이트맵 속성npm install hexo-generator-seo-friendly-sitemap –save\nfeed 속성npm install hexo-generator-feed –save\n\n","dateCreated":"2016-09-23T10:26:53+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2016-09-23T10:26:53+09:00","description":"개요이전포스팅 에서 이야기 한것과 같이 어느곳에서든지(집 또는 회사 등) 블로그 포스팅을 할수 있는 환경을 만들고 싶었다. (git을 이용해서.)","headline":"hexo 환경 구축하기","image":[null,"hexo_github.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2016/09/23/20160923/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2016/09/23/20160923/","keywords":"hexo","thumbnailUrl":"hexo_github.jpg"}</script>
     <meta name="description" content="개요이전포스팅 에서 이야기 한것과 같이 어느곳에서든지(집 또는 회사 등) 블로그 포스팅을 할수 있는 환경을 만들고 싶었다. (git을 이용해서.)">
 <meta name="keywords" content="hexo">
 <meta property="og:type" content="blog">
@@ -31,7 +31,7 @@
         
     
     
-        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.jpg"/>
     
     
     
@@ -90,7 +90,7 @@
                 href="#about">
         
         
-            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+            <img class="header-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
         
         </a>
     
@@ -108,7 +108,7 @@
         
             <div class="sidebar-profile">
                 <a href="/#about">
-                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
                 </a>
                 <h4 class="sidebar-profile-name">taetaetae</h4>
                 
@@ -556,7 +556,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+            <img id="about-card-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
         
             <h4 id="about-card-name">taetaetae</h4>
         

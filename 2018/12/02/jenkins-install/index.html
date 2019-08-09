@@ -13,7 +13,7 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"“show me the money”, “black sheep wall”.어렸을적 스타크래프트라는 게임이 나오고서 입에 달고 살았던 치트키. 게임이 시작되고 해당 치트키를 입력하면 돈이 들어오거나 맵이 훤하게 보여 컴퓨터를 이기는데 도움을 주곤 했었다. 개발을 하면서 Jenkins는 나 대신 어떤 업무를 수행하는데 강력한 툴 중에 하나이다. (물론 만능이라는 소리는 아니지만…) 새로운 프로젝트가 시작되거나 개발도중 무언가 자동화를 하고 싶을 경우엔 Jenkins를 찾게 되는데 그럴때마다 설치를 하고 이런저런 설정이 필요하다.눈치를 챘을수도 있지만 이 포스트는 오로지 젠킨스 설치하는 방법을 아주 간단하고 핵심만 정리하고자 한다. 마치 치트키처럼.나중에 다시 보기위해 + 누군가 해당 포스트를 보고 도움이 되었으면 하는 바람으로.\n(물론 이 방법밖에 있는건 아니지만 필자는 아래와 방법을 사용하고 있다.)\n\n우선 CentOS 환경에 Java가 설치되어 있는 상황이라 가정한다.\n\n적당한 위치에 tomcat 다운 ( https://tomcat.apache.org/download-80.cgi )\n1wget &#123;압축파일 다운경로, 필자는 apache-tomcat-8.5.35 &#125;\n\n압축 해제후 하위 폴더중 webapps로 이동\n12tar -zxvf apache-tomcat-8.5.35.tar.gzcd apache-tomcat-8.5.35/webapps\n\nJenkins 다운 ( https://jenkins.io/download/ )\n1wget http://mirrors.jenkins.io/war-stable/latest/jenkins.war\n\ntomcat 하위폴더중 conf 폴더로 이동\n1cd ../conf\n\nserver.xml 수정 및 http port 확인\n1234567vi server.xml&lt;Host&gt; 하위에 추가&lt;Context path=&quot;/jenkins&quot; debug=&quot;0&quot; privileged=&quot;true&quot; docBase=&quot;jenkins.war&quot; /&gt;port 확인&lt;Connector port=&quot;8080&quot; protocol=&quot;HTTP/1.1&quot;/&gt;\n\n해당 서버의 ip와 위 port에 맞춰 url 입력후 jenkins 설치\n1http://ip:8080/jenkins\n\n","dateCreated":"2018-12-02T04:37:59+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2018-12-02T04:37:59+09:00","description":"“show me the money”, “black sheep wall”.어렸을적 스타크래프트라는 게임이 나오고서 입에 달고 살았던 치트키. 게임이 시작되고 해당 치트키를 입력하면 돈이 들어오거나 맵이 훤하게 보여 컴퓨터를 이기는데 도움을 주곤 했었다.","headline":"Jenkins 설치 치트키","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2018/12/02/jenkins-install/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2018/12/02/jenkins-install/","keywords":"jenkins"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"“show me the money”, “black sheep wall”.어렸을적 스타크래프트라는 게임이 나오고서 입에 달고 살았던 치트키. 게임이 시작되고 해당 치트키를 입력하면 돈이 들어오거나 맵이 훤하게 보여 컴퓨터를 이기는데 도움을 주곤 했었다. 개발을 하면서 Jenkins는 나 대신 어떤 업무를 수행하는데 강력한 툴 중에 하나이다. (물론 만능이라는 소리는 아니지만…) 새로운 프로젝트가 시작되거나 개발도중 무언가 자동화를 하고 싶을 경우엔 Jenkins를 찾게 되는데 그럴때마다 설치를 하고 이런저런 설정이 필요하다.눈치를 챘을수도 있지만 이 포스트는 오로지 젠킨스 설치하는 방법을 아주 간단하고 핵심만 정리하고자 한다. 마치 치트키처럼.나중에 다시 보기위해 + 누군가 해당 포스트를 보고 도움이 되었으면 하는 바람으로.\n(물론 이 방법밖에 있는건 아니지만 필자는 아래와 방법을 사용하고 있다.)\n\n우선 CentOS 환경에 Java가 설치되어 있는 상황이라 가정한다.\n\n적당한 위치에 tomcat 다운 ( https://tomcat.apache.org/download-80.cgi )\n1wget &#123;압축파일 다운경로, 필자는 apache-tomcat-8.5.35 &#125;\n\n압축 해제후 하위 폴더중 webapps로 이동\n12tar -zxvf apache-tomcat-8.5.35.tar.gzcd apache-tomcat-8.5.35/webapps\n\nJenkins 다운 ( https://jenkins.io/download/ )\n1wget http://mirrors.jenkins.io/war-stable/latest/jenkins.war\n\ntomcat 하위폴더중 conf 폴더로 이동\n1cd ../conf\n\nserver.xml 수정 및 http port 확인\n1234567vi server.xml&lt;Host&gt; 하위에 추가&lt;Context path=&quot;/jenkins&quot; debug=&quot;0&quot; privileged=&quot;true&quot; docBase=&quot;jenkins.war&quot; /&gt;port 확인&lt;Connector port=&quot;8080&quot; protocol=&quot;HTTP/1.1&quot;/&gt;\n\n해당 서버의 ip와 위 port에 맞춰 url 입력후 jenkins 설치\n1http://ip:8080/jenkins\n\n","dateCreated":"2018-12-02T04:37:59+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2018-12-02T04:37:59+09:00","description":"“show me the money”, “black sheep wall”.어렸을적 스타크래프트라는 게임이 나오고서 입에 달고 살았던 치트키. 게임이 시작되고 해당 치트키를 입력하면 돈이 들어오거나 맵이 훤하게 보여 컴퓨터를 이기는데 도움을 주곤 했었다.","headline":"Jenkins 설치 치트키","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2018/12/02/jenkins-install/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2018/12/02/jenkins-install/","keywords":"jenkins"}</script>
     <meta name="description" content="“show me the money”, “black sheep wall”.어렸을적 스타크래프트라는 게임이 나오고서 입에 달고 살았던 치트키. 게임이 시작되고 해당 치트키를 입력하면 돈이 들어오거나 맵이 훤하게 보여 컴퓨터를 이기는데 도움을 주곤 했었다.">
 <meta name="keywords" content="jenkins">
 <meta property="og:type" content="blog">
@@ -31,7 +31,7 @@
         
     
     
-        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.jpg"/>
     
     
     
@@ -87,7 +87,7 @@
                 href="#about">
         
         
-            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+            <img class="header-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
         
         </a>
     
@@ -105,7 +105,7 @@
         
             <div class="sidebar-profile">
                 <a href="/#about">
-                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
                 </a>
                 <h4 class="sidebar-profile-name">taetaetae</h4>
                 
@@ -556,7 +556,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+            <img id="about-card-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
         
             <h4 id="about-card-name">taetaetae</h4>
         

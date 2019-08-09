@@ -13,7 +13,7 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png"},"articleBody":"Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html\n# useGeneratedKeys, keyProperty 옵션사용하는 데이터베이스가 자동생성키를 지원한다면(mySql 같은) 해당옵션을 이용해 결과를 리턴 받을수 있다.예로들어 파라미터로 아래 모델객체를 넘긴다고 가정하고123456public Student &#123;  int id;  String name;  String email;  Date regist_date;&#125;\n아래 mybatis 구문으로 insert를 시도하게되면, 파라미터로 넘긴 Student 객체의 id값에 insert 했을때의 key값(id)이 들어오게 된다.123456Student student = new Student();student.setName('bla');student.setEmail('bla@naver.com');mapper.insertStudents(student); // 쿼리실행student.getId(); // 추출 가능\n1234&lt;insert id=\"insertStudents\" useGeneratedKeys=\"true\" keyProperty=\"id\" parameterType=\"Student\"&gt;  insert into Students ( name, email )  values ( #&#123;name&#125;, #&#123;email&#125; )&lt;/insert&gt;\n# selectKey 옵션Oracle 같은 경우는 Auto Increment 가 없고 Sequence를 사용해야만 하기 때문에 위 옵션을 사용할수가 없다. 하지만 다른 우회적인(?) 방법으로 위와같은 효과를 볼수가 있다.파라미터의 모델이나 java구문은 위와 동일하고 xml 쿼리 부분만 아래와 같이 설정해주면 된다.123456789&lt;insert id=\"insertStudents\" parameterType=\"Student\"&gt;  &lt;selectKey keyProperty=\"id\" resultType=\"int\" order=\"BEFORE\"&gt;    select SEQ_ID.nexyval FROM DUAL  &lt;/selectKey&gt;  insert into Students    (id, name , email)  values    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;)&lt;/insert&gt;\n위와같은 코드에서 쿼리가 실행되기 전에 id값에 Sequence에 의해 값을 셋팅하게 되고, 자동적으로 해당 값을 Student의 id에 set하게 되서 동일한 결과를 볼수가 있다.\n항상 테이블의 key값에만 해당하는것이 아니다. key값과는 전혀 상관없는 값도 selectKey 구문으로 리턴할수가 있는데 order옵션을 AFTER로 주고 리턴하고자 하는 값을 명시해주면 된다.아래 코드에서는 입력할시 id값을 Sequence에서 가져오는게 아니라 수동으로 넣어주고, 입력했던 id에 맞는 regist_date 값을 리턴받아 위에서처럼 동일하게 값를 가져올수 있다.123456789&lt;insert id=\"insertStudents\" parameterType=\"Student\"&gt;  &lt;selectKey keyProperty=\"regist_date\" resultType=\"java.util.Date\" order=\"AFTER\"&gt;    select regist_date FROM students WHERE id = #&#123;id&#125;  &lt;/selectKey&gt;  insert into Students    (id, name , email, regist_date)  values    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;, syadate)&lt;/insert&gt;\n","dateCreated":"2017-04-04T11:41:28+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2017-04-04T11:41:28+09:00","description":"Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html","headline":"mybatis insert/update 쿼리실행후 결과 가져오기","image":[null,"mybatis.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.png","logo":{"@type":"ImageObject","url":"profile.png"}},"url":"https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/","keywords":"mybatis, oracle","thumbnailUrl":"mybatis.png"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html\n# useGeneratedKeys, keyProperty 옵션사용하는 데이터베이스가 자동생성키를 지원한다면(mySql 같은) 해당옵션을 이용해 결과를 리턴 받을수 있다.예로들어 파라미터로 아래 모델객체를 넘긴다고 가정하고123456public Student &#123;  int id;  String name;  String email;  Date regist_date;&#125;\n아래 mybatis 구문으로 insert를 시도하게되면, 파라미터로 넘긴 Student 객체의 id값에 insert 했을때의 key값(id)이 들어오게 된다.123456Student student = new Student();student.setName('bla');student.setEmail('bla@naver.com');mapper.insertStudents(student); // 쿼리실행student.getId(); // 추출 가능\n1234&lt;insert id=\"insertStudents\" useGeneratedKeys=\"true\" keyProperty=\"id\" parameterType=\"Student\"&gt;  insert into Students ( name, email )  values ( #&#123;name&#125;, #&#123;email&#125; )&lt;/insert&gt;\n# selectKey 옵션Oracle 같은 경우는 Auto Increment 가 없고 Sequence를 사용해야만 하기 때문에 위 옵션을 사용할수가 없다. 하지만 다른 우회적인(?) 방법으로 위와같은 효과를 볼수가 있다.파라미터의 모델이나 java구문은 위와 동일하고 xml 쿼리 부분만 아래와 같이 설정해주면 된다.123456789&lt;insert id=\"insertStudents\" parameterType=\"Student\"&gt;  &lt;selectKey keyProperty=\"id\" resultType=\"int\" order=\"BEFORE\"&gt;    select SEQ_ID.nexyval FROM DUAL  &lt;/selectKey&gt;  insert into Students    (id, name , email)  values    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;)&lt;/insert&gt;\n위와같은 코드에서 쿼리가 실행되기 전에 id값에 Sequence에 의해 값을 셋팅하게 되고, 자동적으로 해당 값을 Student의 id에 set하게 되서 동일한 결과를 볼수가 있다.\n항상 테이블의 key값에만 해당하는것이 아니다. key값과는 전혀 상관없는 값도 selectKey 구문으로 리턴할수가 있는데 order옵션을 AFTER로 주고 리턴하고자 하는 값을 명시해주면 된다.아래 코드에서는 입력할시 id값을 Sequence에서 가져오는게 아니라 수동으로 넣어주고, 입력했던 id에 맞는 regist_date 값을 리턴받아 위에서처럼 동일하게 값를 가져올수 있다.123456789&lt;insert id=\"insertStudents\" parameterType=\"Student\"&gt;  &lt;selectKey keyProperty=\"regist_date\" resultType=\"java.util.Date\" order=\"AFTER\"&gt;    select regist_date FROM students WHERE id = #&#123;id&#125;  &lt;/selectKey&gt;  insert into Students    (id, name , email, regist_date)  values    (#&#123;id&#125;, #&#123;name&#125;, #&#123;email&#125;, syadate)&lt;/insert&gt;\n","dateCreated":"2017-04-04T11:41:28+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2017-04-04T11:41:28+09:00","description":"Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html","headline":"mybatis insert/update 쿼리실행후 결과 가져오기","image":[null,"mybatis.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2017/04/04/mybatis-useGeneratedKeys/","keywords":"mybatis, oracle","thumbnailUrl":"mybatis.png"}</script>
     <meta name="description" content="Select문이 아닌 다른 SQL Query(insert, update 등) 를 실행하고서 결과를 봐야하는 상황이 생긴다. 정확히 잘 수행되었나에 대한 확인. 어떻게 쿼리가 잘 수행되었나를 확인하는 방법은 다음과 같다.※ 참고 url : http://www.mybatis.org/mybatis-3/ko/sqlmap-xml.html">
 <meta name="keywords" content="mybatis,oracle">
 <meta property="og:type" content="blog">
@@ -31,7 +31,7 @@
         
     
     
-        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.png"/>
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.jpg"/>
     
     
     
@@ -90,7 +90,7 @@
                 href="#about">
         
         
-            <img class="header-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+            <img class="header-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
         
         </a>
     
@@ -108,7 +108,7 @@
         
             <div class="sidebar-profile">
                 <a href="/#about">
-                    <img class="sidebar-profile-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
                 </a>
                 <h4 class="sidebar-profile-name">taetaetae</h4>
                 
@@ -551,7 +551,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/profile.png" alt="Author&#39;s picture"/>
+            <img id="about-card-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
         
             <h4 id="about-card-name">taetaetae</h4>
         
