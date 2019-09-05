@@ -2,20 +2,6 @@
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <url>
-        <loc>https://taetaetae.github.io/tags/oss/</loc>
-        <lastmod>2019-05-30T08:14:51.602Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.2</priority>
-    </url>
-
-    <url>
-        <loc>https://taetaetae.github.io/tags/open-source-software/</loc>
-        <lastmod>2019-05-30T08:14:51.602Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.2</priority>
-    </url>
-
-    <url>
         <loc>https://taetaetae.github.io/tags/%EB%94%94%EC%9E%90%EC%9D%B8%ED%8C%A8%ED%84%B4/</loc>
         <lastmod>2019-05-30T08:14:51.635Z</lastmod>
         <changefreq>weekly</changefreq>
@@ -275,14 +261,14 @@
     </url>
 
     <url>
-        <loc>https://taetaetae.github.io/tags/github/</loc>
+        <loc>https://taetaetae.github.io/tags/jenkins/</loc>
         <lastmod>2019-05-30T08:14:51.970Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https://taetaetae.github.io/tags/jenkins/</loc>
+        <loc>https://taetaetae.github.io/tags/github/</loc>
         <lastmod>2019-05-30T08:14:51.970Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
@@ -576,13 +562,6 @@
     </url>
 
     <url>
-        <loc>https://taetaetae.github.io/tags/review/</loc>
-        <lastmod>2019-07-07T15:10:13.467Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.2</priority>
-    </url>
-
-    <url>
         <loc>https://taetaetae.github.io/tags/%EA%B8%80%EB%98%90/</loc>
         <lastmod>2019-07-07T15:10:13.467Z</lastmod>
         <changefreq>weekly</changefreq>
@@ -590,14 +569,14 @@
     </url>
 
     <url>
-        <loc>https://taetaetae.github.io/tags/fileupload/</loc>
+        <loc>https://taetaetae.github.io/tags/spring/</loc>
         <lastmod>2019-07-21T16:28:50.271Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https://taetaetae.github.io/tags/spring/</loc>
+        <loc>https://taetaetae.github.io/tags/fileupload/</loc>
         <lastmod>2019-07-21T16:28:50.271Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
@@ -620,6 +599,27 @@
     <url>
         <loc>https://taetaetae.github.io/tags/Load-Balance/</loc>
         <lastmod>2019-08-04T13:30:40.411Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>https://taetaetae.github.io/tags/review/</loc>
+        <lastmod>2019-09-05T09:19:53.365Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>https://taetaetae.github.io/tags/oss/</loc>
+        <lastmod>2019-09-05T09:19:53.365Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>https://taetaetae.github.io/tags/open-source-software/</loc>
+        <lastmod>2019-09-05T09:19:53.365Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
