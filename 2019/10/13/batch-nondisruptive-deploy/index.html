@@ -1,0 +1,622 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>더이상 기다리지 않는 배치 무중단 배포 시나리오 - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"지난 포스팅, 그러니까 우아한 형제들에서 초대를 받아 Spring batch 에 대한 테크세미나에 다녀 왔다. 그 중 가장 인상깊었던 부분이 바로 무중단 배포. 차일피일 미루다 필자가 속한 팀에서도 배포때마다 가장 불편을 느끼고 있었던 부분이었기도 했고, 그런가보다 하며 개념만 알고 넘어가기엔 무언가 양심에 찔려 직접 무중단 배포를 할 수 있도록 구성을 해보고 테스트까지 해보고자 한다.\n# 상황 및 문제점리눅스 서버에 Jenkins가 설치되어 있고, Spring batch 모듈을 실행시키고 있다. 수동으로 실행을 하거나, Jenkins RestApi를 이용해서 실행을 할 수 있지만 주로 정해진 시간 즉, 스케쥴링에 의해 실행되곤 한다. 스케쥴링의 가장 작은 단위는 1분단위 배치도 있기 때문에 24시간 멈추지 않고 실행되고 있다고 무방하다. 하지만 배치 모듈이 수정되고, 배포를 하기 위해서는 다음과 같은 시나리오로 진행이 된다.\n\nJenkins 설정의 끄기전 준비 를 실행하여 더이상 Jenkins에 의해 Spring batch 모듈(이하 Job)이 실행되지 않도록 한다.\n새로운 Job은 더이상 실행되지 않지만 이미 실행중이였던 Job 은 강제로 중단을 하거나 Job 이 끝날때까지 기다린다.\n실행중인 Job이 없을 경우 이제 배포를 진행한다.\n배포가 완료되면 Jenkins 설정의 끄기전 준비를 해제한다.\n\n실행중인 Job이 안끝나면 마냥 기다릴텐가? 출처 : https://m.post.naver.com/viewer/postView.nhn?volumeNo=14100660&memberNo=2032633실행중인 Job이 안끝나면 마냥 기다릴텐가? 출처 : https://m.post.naver.com/viewer/postView.nhn?volumeNo=14100660&memberNo=2032633\n실행되는 Job을 중단하지 못하는 상황 즉, 실행중에 중단하면 트랜잭션이 깨져 무조건 기다려야만 하는 상황이라면 배포 또한 계속 지연될 수 밖에 없는 상황인 것이다. Spring boot에 java config 를 활용하고 딱 jar 파일 하나를 실행하는 방식이라면 jar파일을 바꿔치기 하는 식으로 고민을 해볼수도 있을것 같다. 하지만 Legacy 코드가 아직 존재하여 일반 Spring 에 xml 로 config 하는 방식으로 운영중이라 jar파일 하나만 바꿔치기 하기엔 무리가 있는 상황. \n은총알처럼 어디에서나 사용이 가능한 만병통치약 같은 방법은 없다. 언제나 그랬듯 현재 시스템(xml config 방식)에 가장 최적화된 방법, 그리고 java config 방식에서도 사용이 가능할것 같은 방법을 생각해 보았다.\n# 무중단 배포를 가능케 하는 3가지 핵심1. 배포를 매번 새로운 경로에 배포한다.각 회사마다, 그리고 서비스마다 정말 다양한 배포 시스템이 있다. 그들의 공통점은 원격서버의 특정 경로에 빌드된 파일들을 밀어 넣어준다는 것. 시나리오는 다음과 같다.\n\n배포할때마다 별도의 디렉토리를 생성한뒤 심볼릭 링크를 연결해준다.\n배포는 1에서 연결한 심볼릭 링크에 배포되도록 설정, 결국 매번 만들어지는 디렉토리에 배포가 되게 된다.\n\n여기서 중요한점은 “배포할 때마다 새로운 디렉토리에 배포가 된다” 와 배포시에는 항상 심볼릭 링크에만 배포를 하면 되기 때문에 “배포시스템이 새로 만들어지는 디렉토리의 경로를 몰라도 무방하다”는 점이다.123456#!/bin/shcd /~~~/deploy/# 임시 디렉토리DIRECTORY_NAME=batch_$(/bin/date +%Y%m%d%H%M%S)mkdir $DIRECTORY_NAME\n위 쉘 스크립트를 실행하면 batch_20191012205218 와 같은 디렉토리가 생성이 된다. 심볼릭 링크 관련해서는 바로 아래 이어서 설명하겠다.\n2. 심볼릭 링크의 원래 링크를 즉시 변경보통 심볼릭 링크 (즉, 바로가기) 의 경로를 변경하기 위해서는 아래처럼 지웠다가 삭제하는 식으로 했었는데123456789101112131415$ mkdir directory_a$ mkdir directory_b$ ln -s directory_a asdf$ llasdf -&gt; directory_adirectory_adirectory_b# directory_a 에서 directory_b 로 바꾸는 경우 (심볼릭 링크 자체를 삭제하고 다시 심볼릭 링크 생성)$ rm asdf$ ln -s directory_a$ llasdf -&gt; directory_bdirectory_adirectory_b\n이렇게 되면 삭제하고 ~ 다시 만들어지는 타이밍에 배포가 되거나 실행이 되는 즉, 해당 경로에 엑세스 하는 경우 이전의 경로를 바라본다거나 의도했던 방식으로 실행이 되지 않는 상황이 발생한다. (찰나의 타이밍 이지만 필자는 이러한 문제로 이전의 경로를 바라보는 문제가 발생했었다.) 그래서 ln 의 옵션중인 -Tfs옵션으로 즉시 변경을 해주도록 하자. (ln man 참고)12# 만든 임시 디렉토리로 배포될수 있도록 설정한다.ln -Tfs /deploy/$DIRECTORY_NAME /~~~/deploy/batch\n3. 심볼릭 링크가 가리키는 원래 링크에서 실행리눅스 명령어 중에 readlink라는게 있다. 실제 링크를 얻어오는 명령어 인데 이를 활용하여 위에서 설정해둔 심볼릭 링크의 실제 링크(최신 배포된 경로)를 가져오고 그곳에서 Spring batch 모듈을 실행하는 식으로 구성을 해보자.1234#!/bin/bashBASEDIR=`readlink -f $(dirname $0)` # -f 옵션 : 전체경로cd $BASEDIR # 이후 Spring batch jar 실행\n이렇게 되면 Job이 실행중이라도 기존에 실행중인 Job은 기존 모듈을 바라보고 실행이 되고, 도중에 새로 배포가 되어도 기존 실행되는 Job에는 영향을 주지 않으며(심볼릭 링크에 연결되었던 과거 배포 경로에서 실행되고 있기 때문) 새롭게 배포된 후 Job이 실행될때도 배포된 경로의 &gt; 심볼릭 링크의 &gt; 실제 링크 즉, 새롭게 배포된 경로에서 실행되기 때문에 무중단 배포가 가능하게 된다.\n# 전체 흐름핵심만 설명하다보니 전체적으로 어떻게 돌아가는지 이해를 못하셨을 분들을 위해 전체 흐름에 대해 설명을 해보고자 한다.1. 배포 전  임시 디렉토리를 생성하고, 그곳에 배포가 될 수 있도록 심볼릭 링크를 연결해준다.  123456789#!/bin/shcd /~~~/deploy/# 임시 디렉토리DIRECTORY_NAME=batch_$(/bin/date +%Y%m%d%H%M%S)mkdir $DIRECTORY_NAME# 만든 임시 디렉토리로 배포될수 있도록 설정한다.ln -Tfs /~~~/deploy/$DIRECTORY_NAME /~~~/deploy/batch\n2. 배포  배포 시스템에 의해 /~~~/deploy/batch 로 배포되도록 한다.\n3. 배포 후  이후 배포 실행은 새롭게 배포된 경로에서 실행되도록 심볼릭 링크를 수정해준다.  12345678#!/bin/shcd /~~~/deploy/# 배포된 경로를 실행할 경로로 변경해준다.REAL_DIRECTORY_PATH=$(readlink -f /~~~/deploy/batch)ln -Tfs $REAL_DIRECTORY_PATH /~~~/deploy/batch# 예전에 배포된 폴더들을 삭제해준다. (최근 몇개까지만 지울것인가는 상황에 따라)\n4. 배치 실행  1234#!/bin/bashBASEDIR=`readlink -f $(dirname $0)` # -f 옵션 : 전체경로cd $BASEDIR # 이후 배치 실행 ( e.g. batch.jar xxxJob )\n# 마치며jar파일이 실행되고 JVM에 올라가게 되면 jar파일을 삭제한다거나 위치를 이동시켜도 에러가 나거나 하지는 않지만 코드 내에서 상대경로같은 설정들이 있기 때문에 폴더 전체를 심볼릭 링크로 연결하고 그 안에서 실행되도록 수정하였다. 앞서 이야기 했지만 이러한 설계는 어디까지나 필자가 운영하고 있는 상황에 맞춘것이기 때문에 이를 어떻게 잘 활용하는가가 이번 포스팅에 주요 핵심이 될 수 있을것 같다.항상 배포 할때마다 예전에 그렇게 해왔기 때문에 라는 핑계로 Job이 돌고있으면 기다렸다가 배포해야만 했던 필자 자신이 부끄러워진다. 시도조차 안해보고 그런가보다 하고 적응만 하려 하거나, 불편하지만 안불편한척 하는 그런 태도를 버려야 하지 않을까 하는 반성을 해보는 시간이 되었다.\n","dateCreated":"2019-10-13T15:46:12+09:00","dateModified":"2019-10-14T00:44:53+09:00","datePublished":"2019-10-13T15:46:12+09:00","description":"지난 포스팅, 그러니까 우아한 형제들에서 초대를 받아 Spring batch 에 대한 테크세미나에 다녀 왔다. 그 중 가장 인상깊었던 부분이 바로 무중단 배포. 차일피일 미루다 필자가 속한 팀에서도 배포때마다 가장 불편을 느끼고 있었던 부분이었기도 했고","headline":"더이상 기다리지 않는 배치 무중단 배포 시나리오","image":["wait_illustration.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/","keywords":"jenkins, linux, batch","thumbnailUrl":"wait_illustration.jpg"}</script>
+    <meta name="description" content="지난 포스팅, 그러니까 우아한 형제들에서 초대를 받아 Spring batch 에 대한 테크세미나에 다녀 왔다. 그 중 가장 인상깊었던 부분이 바로 무중단 배포. 차일피일 미루다 필자가 속한 팀에서도 배포때마다 가장 불편을 느끼고 있었던 부분이었기도 했고">
+<meta name="keywords" content="jenkins,linux,batch">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="더이상 기다리지 않는 배치 무중단 배포 시나리오">
+<meta property="og:url" content="https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="지난 포스팅, 그러니까 우아한 형제들에서 초대를 받아 Spring batch 에 대한 테크세미나에 다녀 왔다. 그 중 가장 인상깊었던 부분이 바로 무중단 배포. 차일피일 미루다 필자가 속한 팀에서도 배포때마다 가장 불편을 느끼고 있었던 부분이었기도 했고">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-10-13T15:44:53.242Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="더이상 기다리지 않는 배치 무중단 배포 시나리오">
+<meta name="twitter:description" content="지난 포스팅, 그러니까 우아한 형제들에서 초대를 받아 Spring batch 에 대한 테크세미나에 다녀 왔다. 그 중 가장 인상깊었던 부분이 바로 무중단 배포. 차일피일 미루다 필자가 속한 팀에서도 배포때마다 가장 불편을 느끼고 있었던 부분이었기도 했고">
+<meta name="twitter:image" content="https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/wait.jpg">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.jpg"/>
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/wait_illustration.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/wait_illustration.jpg" />
+    
+    
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>    
+    <ins class="adsbygoogle"
+   style="display:inline-block;max-width:250px;width:100%;max-height:380px;height:100%"
+   data-ad-client="ca-pub-5788330009690816">
+</ins>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            더이상 기다리지 않는 배치 무중단 배포 시나리오
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-10-13T15:46:12+09:00">
+	
+		    Oct 13, 2019
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p><a href="https://taetaetae.github.io/2019/09/29/woowabros-spring-batch/">지난 포스팅</a>, 그러니까 우아한 형제들에서 초대를 받아 Spring batch 에 대한 테크세미나에 다녀 왔다. 그 중 가장 인상깊었던 부분이 바로 <code>무중단 배포</code>. 차일피일 미루다 필자가 속한 팀에서도 배포때마다 가장 불편을 느끼고 있었던 부분이었기도 했고<a id="more"></a>, <code>그런가보다</code> 하며 개념만 알고 넘어가기엔 무언가 양심에 찔려 직접 무중단 배포를 할 수 있도록 구성을 해보고 테스트까지 해보고자 한다.</p>
+<h3 id="상황-및-문제점"><a href="#상황-및-문제점" class="headerlink" title="# 상황 및 문제점"></a># 상황 및 문제점</h3><p>리눅스 서버에 Jenkins가 설치되어 있고, Spring batch 모듈을 실행시키고 있다. 수동으로 실행을 하거나, Jenkins RestApi를 이용해서 실행을 할 수 있지만 주로 정해진 시간 즉, 스케쥴링에 의해 실행되곤 한다. 스케쥴링의 가장 작은 단위는 1분단위 배치도 있기 때문에 24시간 멈추지 않고 실행되고 있다고 무방하다. 하지만 배치 모듈이 수정되고, 배포를 하기 위해서는 다음과 같은 시나리오로 진행이 된다.</p>
+<ol>
+<li>Jenkins 설정의 <code>끄기전 준비</code> 를 실행하여 더이상 Jenkins에 의해 Spring batch 모듈(이하 Job)이 실행되지 않도록 한다.</li>
+<li>새로운 Job은 더이상 실행되지 않지만 이미 실행중이였던 Job 은 강제로 중단을 하거나 Job 이 끝날때까지 기다린다.</li>
+<li>실행중인 Job이 없을 경우 이제 배포를 진행한다.</li>
+<li>배포가 완료되면 Jenkins 설정의 <code>끄기전 준비</code>를 해제한다.</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="wait.jpg" title="실행중인 Job이 안끝나면 마냥 기다릴텐가? <br>출처 : https://m.post.naver.com/viewer/postView.nhn?volumeNo=14100660&memberNo=2032633" data-caption="실행중인 Job이 안끝나면 마냥 기다릴텐가? <br>출처 : https://m.post.naver.com/viewer/postView.nhn?volumeNo=14100660&memberNo=2032633" data-fancybox="default"><img class="fig-img" src="wait.jpg" alt="실행중인 Job이 안끝나면 마냥 기다릴텐가? <br>출처 : https://m.post.naver.com/viewer/postView.nhn?volumeNo=14100660&memberNo=2032633"><span class="image-caption">실행중인 Job이 안끝나면 마냥 기다릴텐가? <br>출처 : https://m.post.naver.com/viewer/postView.nhn?volumeNo=14100660&memberNo=2032633</span></a><span class="caption">실행중인 Job이 안끝나면 마냥 기다릴텐가? <br>출처 : https://m.post.naver.com/viewer/postView.nhn?volumeNo=14100660&memberNo=2032633</span></div><div style="clear:both;"></div>
+<p>실행되는 Job을 중단하지 못하는 상황 즉, 실행중에 중단하면 트랜잭션이 깨져 무조건 기다려야만 하는 상황이라면 배포 또한 계속 지연될 수 밖에 없는 상황인 것이다. Spring boot에 java config 를 활용하고 딱 <code>jar</code> 파일 하나를 실행하는 방식이라면 <code>jar</code>파일을 바꿔치기 하는 식으로 고민을 해볼수도 있을것 같다. 하지만 Legacy 코드가 아직 존재하여 일반 Spring 에 xml 로 config 하는 방식으로 운영중이라 <code>jar</code>파일 하나만 바꿔치기 하기엔 무리가 있는 상황. </p>
+<p>은총알처럼 어디에서나 사용이 가능한 만병통치약 같은 방법은 없다. 언제나 그랬듯 현재 시스템(xml config 방식)에 가장 최적화된 방법, 그리고 java config 방식에서도 사용이 가능할것 같은 방법을 생각해 보았다.</p>
+<h3 id="무중단-배포를-가능케-하는-3가지-핵심"><a href="#무중단-배포를-가능케-하는-3가지-핵심" class="headerlink" title="# 무중단 배포를 가능케 하는 3가지 핵심"></a># 무중단 배포를 가능케 하는 3가지 핵심</h3><p><strong>1. 배포를 매번 새로운 경로에 배포한다.</strong><br>각 회사마다, 그리고 서비스마다 정말 다양한 배포 시스템이 있다. 그들의 공통점은 원격서버의 <code>특정 경로</code>에 빌드된 파일들을 밀어 넣어준다는 것. 시나리오는 다음과 같다.</p>
+<ol>
+<li>배포할때마다 별도의 디렉토리를 생성한뒤 심볼릭 링크를 연결해준다.</li>
+<li>배포는 <code>1</code>에서 연결한 심볼릭 링크에 배포되도록 설정, 결국 매번 만들어지는 디렉토리에 배포가 되게 된다.</li>
+</ol>
+<p>여기서 중요한점은 “배포할 때마다 새로운 디렉토리에 배포가 된다” 와 배포시에는 항상 심볼릭 링크에만 배포를 하면 되기 때문에 “배포시스템이 새로 만들어지는 디렉토리의 경로를 몰라도 무방하다”는 점이다.<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">cd</span> /~~~/deploy/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 임시 디렉토리</span></span><br><span class="line">DIRECTORY_NAME=batch_$(/bin/date +%Y%m%d%H%M%S)</span><br><span class="line">mkdir <span class="variable">$DIRECTORY_NAME</span></span><br></pre></td></tr></table></figure></p>
+<p>위 쉘 스크립트를 실행하면 batch_20191012205218 와 같은 디렉토리가 생성이 된다. 심볼릭 링크 관련해서는 바로 아래 이어서 설명하겠다.</p>
+<p><strong>2. 심볼릭 링크의 원래 링크를 즉시 변경</strong><br>보통 심볼릭 링크 (즉, 바로가기) 의 경로를 변경하기 위해서는 아래처럼 지웠다가 삭제하는 식으로 했었는데<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir directory_a</span><br><span class="line">$ mkdir directory_b</span><br><span class="line">$ ln -s directory_a asdf</span><br><span class="line">$ ll</span><br><span class="line">asdf -&gt; directory_a</span><br><span class="line">directory_a</span><br><span class="line">directory_b</span><br><span class="line"></span><br><span class="line"><span class="comment"># directory_a 에서 directory_b 로 바꾸는 경우 (심볼릭 링크 자체를 삭제하고 다시 심볼릭 링크 생성)</span></span><br><span class="line">$ rm asdf</span><br><span class="line">$ ln -s directory_a</span><br><span class="line">$ ll</span><br><span class="line">asdf -&gt; directory_b</span><br><span class="line">directory_a</span><br><span class="line">directory_b</span><br></pre></td></tr></table></figure></p>
+<p>이렇게 되면 삭제하고 ~ 다시 만들어지는 타이밍에 배포가 되거나 실행이 되는 즉, 해당 경로에 엑세스 하는 경우 이전의 경로를 바라본다거나 의도했던 방식으로 실행이 되지 않는 상황이 발생한다. (찰나의 타이밍 이지만 필자는 이러한 문제로 이전의 경로를 바라보는 문제가 발생했었다.) 그래서 ln 의 옵션중인 <code>-Tfs</code>옵션으로 즉시 변경을 해주도록 하자. (<a href="https://linux.die.net/man/1/ln" target="_blank" rel="noopener">ln man 참고</a>)<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 만든 임시 디렉토리로 배포될수 있도록 설정한다.</span></span><br><span class="line">ln -Tfs /deploy/<span class="variable">$DIRECTORY_NAME</span> /~~~/deploy/batch</span><br></pre></td></tr></table></figure></p>
+<p><strong>3. 심볼릭 링크가 가리키는 원래 링크에서 실행</strong><br>리눅스 명령어 중에 <a href="https://linux.die.net/man/1/readlink" target="_blank" rel="noopener">readlink</a>라는게 있다. 실제 링크를 얻어오는 명령어 인데 이를 활용하여 위에서 설정해둔 심볼릭 링크의 실제 링크(최신 배포된 경로)를 가져오고 그곳에서 Spring batch 모듈을 실행하는 식으로 구성을 해보자.<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line">BASEDIR=`readlink -f $(dirname <span class="variable">$0</span>)` <span class="comment"># -f 옵션 : 전체경로</span></span><br><span class="line"><span class="built_in">cd</span> <span class="variable">$BASEDIR</span> <span class="comment"># 이후 Spring batch jar 실행</span></span><br></pre></td></tr></table></figure></p>
+<p>이렇게 되면 Job이 실행중이라도 기존에 실행중인 Job은 기존 모듈을 바라보고 실행이 되고, 도중에 새로 배포가 되어도 기존 실행되는 Job에는 영향을 주지 않으며(심볼릭 링크에 연결되었던 과거 배포 경로에서 실행되고 있기 때문) 새롭게 배포된 후 Job이 실행될때도 배포된 경로의 &gt; 심볼릭 링크의 &gt; 실제 링크 즉, 새롭게 배포된 경로에서 실행되기 때문에 무중단 배포가 가능하게 된다.</p>
+<h3 id="전체-흐름"><a href="#전체-흐름" class="headerlink" title="# 전체 흐름"></a># 전체 흐름</h3><p>핵심만 설명하다보니 전체적으로 어떻게 돌아가는지 이해를 못하셨을 분들을 위해 전체 흐름에 대해 설명을 해보고자 한다.<br><strong>1. 배포 전</strong><br>  임시 디렉토리를 생성하고, 그곳에 배포가 될 수 있도록 심볼릭 링크를 연결해준다.<br>  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">cd</span> /~~~/deploy/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 임시 디렉토리</span></span><br><span class="line">DIRECTORY_NAME=batch_$(/bin/date +%Y%m%d%H%M%S)</span><br><span class="line">mkdir <span class="variable">$DIRECTORY_NAME</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 만든 임시 디렉토리로 배포될수 있도록 설정한다.</span></span><br><span class="line">ln -Tfs /~~~/deploy/<span class="variable">$DIRECTORY_NAME</span> /~~~/deploy/batch</span><br></pre></td></tr></table></figure></p>
+<p><strong>2. 배포</strong><br>  배포 시스템에 의해 <code>/~~~/deploy/batch</code> 로 배포되도록 한다.</p>
+<p><strong>3. 배포 후</strong><br>  이후 배포 실행은 새롭게 배포된 경로에서 실행되도록 심볼릭 링크를 수정해준다.<br>  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">cd</span> /~~~/deploy/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 배포된 경로를 실행할 경로로 변경해준다.</span></span><br><span class="line">REAL_DIRECTORY_PATH=$(readlink -f /~~~/deploy/batch)</span><br><span class="line">ln -Tfs <span class="variable">$REAL_DIRECTORY_PATH</span> /~~~/deploy/batch</span><br><span class="line"></span><br><span class="line"><span class="comment"># 예전에 배포된 폴더들을 삭제해준다. (최근 몇개까지만 지울것인가는 상황에 따라)</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>4. 배치 실행</strong><br>  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line">BASEDIR=`readlink -f $(dirname <span class="variable">$0</span>)` <span class="comment"># -f 옵션 : 전체경로</span></span><br><span class="line"><span class="built_in">cd</span> <span class="variable">$BASEDIR</span> <span class="comment"># 이후 배치 실행 ( e.g. batch.jar xxxJob )</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="마치며"><a href="#마치며" class="headerlink" title="# 마치며"></a># 마치며</h3><p><code>jar</code>파일이 실행되고 <code>JVM</code>에 올라가게 되면 <code>jar</code>파일을 삭제한다거나 위치를 이동시켜도 에러가 나거나 하지는 않지만 코드 내에서 상대경로같은 설정들이 있기 때문에 폴더 전체를 심볼릭 링크로 연결하고 그 안에서 실행되도록 수정하였다. 앞서 이야기 했지만 이러한 설계는 어디까지나 필자가 운영하고 있는 상황에 맞춘것이기 때문에 이를 어떻게 잘 <code>활용</code>하는가가 이번 포스팅에 주요 핵심이 될 수 있을것 같다.<br>항상 배포 할때마다 <code>예전에 그렇게 해왔기 때문에</code> 라는 핑계로 Job이 돌고있으면 기다렸다가 배포해야만 했던 필자 자신이 부끄러워진다. 시도조차 안해보고 그런가보다 하고 적응만 하려 하거나, 불편하지만 안불편한척 하는 그런 태도를 버려야 하지 않을까 하는 반성을 해보는 시간이 되었다.<br><br><br><br></p>
+
+            
+
+        </div>
+    </div>
+    <style>.bmc-button img{width: 27px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{line-height: 36px !important;height:37px !important;text-decoration: none !important;display:inline-flex !important;color:#000000 !important;background-color:#FFDD00 !important;border-radius: 3px !important;border: 1px solid transparent !important;padding: 1px 9px !important;font-size: 22px !important;letter-spacing: 0.6px !important;box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;margin: 0 auto !important;font-family:'Cookie', cursive !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;-o-transition: 0.3s all linear !important;-webkit-transition: 0.3s all linear !important;-moz-transition: 0.3s all linear !important;-ms-transition: 0.3s all linear !important;transition: 0.3s all linear !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#000000 !important;}</style><link href="https://fonts.googleapis.com/css?family=Cookie" rel="stylesheet"><center><span>이 글이 도움이 되셨다면 광고클릭 또는 아래 버튼으로 후원 부탁드립니다.</span><br><a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/taetaetae"><img src="https://www.buymeacoffee.com/assets/img/BMC-btn-logo.svg" alt="Buy me a coffee"><span style="margin-left:5px">Buy me a coffee</span></a></center>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/batch/">batch</a> <a class="tag tag--primary tag--small t-link" href="/tags/jenkins/">jenkins</a> <a class="tag tag--primary tag--small t-link" href="/tags/linux/">linux</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/09/29/woowabros-spring-batch/" data-tooltip="우아한 스프링 배치 테크세미나 정리 및 후기 (by 우아한 형제들)" aria-label="NEXT: 우아한 스프링 배치 테크세미나 정리 및 후기 (by 우아한 형제들)">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2019/09/29/woowabros-spring-batch/" data-tooltip="우아한 스프링 배치 테크세미나 정리 및 후기 (by 우아한 형제들)" aria-label="NEXT: 우아한 스프링 배치 테크세미나 정리 및 후기 (by 우아한 형제들)">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2019/10/13/batch-nondisruptive-deploy/';
+                 
+                    this.page.identifier = '2019/10/13/batch-nondisruptive-deploy/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>
