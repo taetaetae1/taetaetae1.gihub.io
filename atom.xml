@@ -67,9 +67,9 @@
     
       <category term="jenkins" scheme="https://taetaetae.github.io/tags/jenkins/"/>
     
-      <category term="batch" scheme="https://taetaetae.github.io/tags/batch/"/>
-    
       <category term="spring" scheme="https://taetaetae.github.io/tags/spring/"/>
+    
+      <category term="batch" scheme="https://taetaetae.github.io/tags/batch/"/>
     
   </entry>
   
@@ -141,9 +141,9 @@
       <category term="tech" scheme="https://taetaetae.github.io/categories/tech/"/>
     
     
-      <category term="spring" scheme="https://taetaetae.github.io/tags/spring/"/>
-    
       <category term="fileupload" scheme="https://taetaetae.github.io/tags/fileupload/"/>
+    
+      <category term="spring" scheme="https://taetaetae.github.io/tags/spring/"/>
     
   </entry>
   
