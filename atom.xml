@@ -39,9 +39,9 @@
       <category term="blog" scheme="https://taetaetae.github.io/categories/blog/"/>
     
     
-      <category term="blog" scheme="https://taetaetae.github.io/tags/blog/"/>
-    
       <category term="writing" scheme="https://taetaetae.github.io/tags/writing/"/>
+    
+      <category term="blog" scheme="https://taetaetae.github.io/tags/blog/"/>
     
   </entry>
   
@@ -165,9 +165,9 @@
       <category term="tech" scheme="https://taetaetae.github.io/categories/tech/"/>
     
     
-      <category term="fileupload" scheme="https://taetaetae.github.io/tags/fileupload/"/>
-    
       <category term="spring" scheme="https://taetaetae.github.io/tags/spring/"/>
+    
+      <category term="fileupload" scheme="https://taetaetae.github.io/tags/fileupload/"/>
     
   </entry>
   
@@ -367,9 +367,9 @@
       <category term="review" scheme="https://taetaetae.github.io/categories/review/"/>
     
     
-      <category term="write" scheme="https://taetaetae.github.io/tags/write/"/>
-    
       <category term="blog" scheme="https://taetaetae.github.io/tags/blog/"/>
+    
+      <category term="write" scheme="https://taetaetae.github.io/tags/write/"/>
     
       <category term="write the docs" scheme="https://taetaetae.github.io/tags/write-the-docs/"/>
     
