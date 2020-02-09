@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://taetaetae.github.io/2020/02/09/jupyter-install/</loc>
+    
+    <lastmod>2020-02-09T12:25:51.909Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://taetaetae.github.io/2020/01/19/spring-boot-maven-multi-module/</loc>
     
     <lastmod>2020-01-19T03:03:09.034Z</lastmod>
