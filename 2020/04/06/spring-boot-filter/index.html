@@ -1,0 +1,665 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>스프링 부트에 필터를 &#39;조심해서&#39; 사용하는 두 가지 방법 - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"웹 어플리케이션에서 필터를 사용하면 중복으로 처리되는 내용을 한곳에서 처리할 수 있다거나 서비스의 다양한 니즈를 충족시키기에 안성맞춤인 장치인것 같다. 필터란 무엇인가 에 대한 내용은 워낙에 다른 블로그나 공식 도큐먼트에서 자세하게 그리고 다양하게 설명하고 있기에 기본 개념에 대해서는 설명하지 않도록 하려 한다. 이번 포스팅에서는 스프링 부트를 사용하면서 어노테이션이라는 간편함에 취해(?) “돌격 앞으로, 닥공” 의 자세로 개발을 하려했던 필자를 보고 “반성”의 자세로 필터를 등록하는 방법에 대해 명확하게 정리를 하고자 한다. 마지막으로는 아주 간단하면서도 엄청나게 위험한 필터 설정 사례에 대해서도 짚고 넘어가보자.그냥 넘어가면 아쉬우니, 한번이라도 ‘spring’ 이라는 framework 를 접해본 사람이라면 봤을법한 그림을 첨부하는것으로 필터란 무엇인가 에 대한 설명을 대신하는게 좋겠다.\n출처 : https://justforchangesake.wordpress.com/2014/05/07/spring-mvc-request-life-cycle/출처 : https://justforchangesake.wordpress.com/2014/05/07/spring-mvc-request-life-cycle/\n방법을 설명하기 전에 동일하게 사용될 필터와 컨트롤러 코드를 보면 다음과 같다.\n\n필터\n1234567891011121314151617181920@Slf4jpublic class MyFilter implements Filter &#123;\t@Override\tpublic void init(FilterConfig filterConfig) throws ServletException &#123;\t\tlog.info(\"init MyFilter\");\t&#125;\t@Override\tpublic void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)\t\tthrows IOException, ServletException &#123;\t\tlog.info(\"doFilter MyFilter, uri : &#123;&#125;\", ((HttpServletRequest)servletRequest).getRequestURI());\t\tfilterChain.doFilter(servletRequest, servletResponse);\t&#125;\t@Override\tpublic void destroy() &#123;\t\tlog.info(\"destroy MyFilter\");\t&#125;&#125;\n\n테스트 할 컨트롤러\n1234567891011121314@Slf4j@RestControllerpublic class SampleController &#123;\t@GetMapping(\"/test\")\tpublic String test() &#123;\t\treturn \"test\";\t&#125;\t@GetMapping(\"/filtered/test\")\tpublic String filteredTest() &#123;\t\treturn \"filtered\";\t&#125;&#125;\n\n\n# 방법 1 : FilterRegistrationBean아주 간단하게, 일반 url 하나와 필터에 적용할 url 두개를 만들고 설정하려 한다. FilterRegistrationBean 을 이용해서 위에서 만들었던 필터를 아래처럼 등록해보자.\n123456789101112131415@SpringBootApplicationpublic class Method1Application &#123;\tpublic static void main(String[] args) &#123;\t\tSpringApplication.run(Method1Application.class, args);\t&#125;\t@Bean\tpublic FilterRegistrationBean setFilterRegistration() &#123;\t\tFilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new MyFilter());\t\t// filterRegistrationBean.setUrlPatterns(Collections.singletonList(\"/filtered/*\")); // list 를 받는 메소드\t\tfilterRegistrationBean.addUrlPatterns(\"/filtered/*\"); // string 여러개를 가변인자로 받는 메소드\t\treturn filterRegistrationBean;\t&#125;&#125;\n위 주석에도 적었지만 filterRegistrationBean 의 “setUrlPatterns” 와 “addUrlPatterns” 의 차이는 별거 없다. list 자체를 받을건지 아니면 가변인자로 계속 추가 할것인지. 이렇게 되면 “/filtered/“으로 “시작”하는 패턴의 url의 요청이 오게 되면 등록한 필터를 통과하게 된다. \n\n실행 : 필터 생성\n123456789101112131415161718192021222324 /\\\\ / ___&apos;_ __ _ _(_)_ __  __ _ \\ \\ \\ \\( ( )\\___ | &apos;_ | &apos;_| | &apos;_ \\/ _` | \\ \\ \\ \\ \\\\/  ___)| |_)| | | | | || (_| |  ) ) ) )  &apos;  |____| .__|_| |_|_| |_\\__, | / / / / =========|_|==============|___/=/_/_/_/ :: Spring Boot ::        (v2.2.6.RELEASE)2020-04-06 23:45:01.225  INFO 14672 --- [           main] c.t.s.method1.Method1Application         : No active profile set, falling back to default profiles: default2020-04-06 23:45:02.153  INFO 14672 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)2020-04-06 23:45:02.168  INFO 14672 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]2020-04-06 23:45:02.168  INFO 14672 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.33]2020-04-06 23:45:02.361  INFO 14672 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext2020-04-06 23:45:02.362 DEBUG 14672 --- [           main] o.s.web.context.ContextLoader            : Published root WebApplicationContext as ServletContext attribute with name [org.springframework.web.context.WebApplicationContext.ROOT]2020-04-06 23:45:02.362  INFO 14672 --- [           main] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 1082 ms2020-04-06 23:45:02.391 DEBUG 14672 --- [           main] o.s.b.w.s.ServletContextInitializerBeans : Mapping filters: filterRegistrationBean urls=[/filtered/*] order=2147483647, characterEncodingFilter urls=[/*] order=-2147483648, formContentFilter urls=[/*] order=-9900, requestContextFilter urls=[/*] order=-1052020-04-06 23:45:02.391 DEBUG 14672 --- [           main] o.s.b.w.s.ServletContextInitializerBeans : Mapping servlets: dispatcherServlet urls=[/]2020-04-06 23:45:02.409 DEBUG 14672 --- [           main] o.s.b.w.s.f.OrderedRequestContextFilter  : Filter &apos;requestContextFilter&apos; configured for use2020-04-06 23:45:02.409 DEBUG 14672 --- [           main] s.b.w.s.f.OrderedCharacterEncodingFilter : Filter &apos;characterEncodingFilter&apos; configured for use// 필터가 생성 되었다!2020-04-06 23:45:02.410  INFO 14672 --- [           main] c.t.springbootfilter.method1.MyFilter    : init MyFilter2020-04-06 23:45:02.410 DEBUG 14672 --- [           main] o.s.b.w.s.f.OrderedFormContentFilter     : Filter &apos;formContentFilter&apos; configured for use2020-04-06 23:45:02.544  INFO 14672 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService &apos;applicationTaskExecutor&apos;\n\n일반 url\n123452020-04-06 23:45:27.526 DEBUG 14672 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET &quot;/test&quot;, parameters=&#123;&#125;2020-04-06 23:45:27.528 DEBUG 14672 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method1.SampleController#test()2020-04-06 23:45:27.548 DEBUG 14672 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]2020-04-06 23:45:27.548 DEBUG 14672 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;test&quot;]2020-04-06 23:45:27.555 DEBUG 14672 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK\n\n필터링 url\n12345678// 필터에 들어온것 확인!2020-04-06 23:45:37.455  INFO 14672 --- [nio-8080-exec-2] c.t.springbootfilter.method1.MyFilter    : doFilter MyFilter, uri : /filtered/test2020-04-06 23:45:37.456 DEBUG 14672 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET &quot;/filtered/test&quot;, parameters=&#123;&#125;2020-04-06 23:45:37.456 DEBUG 14672 --- [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method1.SampleController#filteredTest()2020-04-06 23:45:37.457 DEBUG 14672 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]2020-04-06 23:45:37.457 DEBUG 14672 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;filtered&quot;]2020-04-06 23:45:37.459 DEBUG 14672 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK\n\n\n# 방법 2 : @WebFilter + @ServletComponentScan@ServletComponentScan 어노테이션을 @Configuration 어노테이션이 설정되어 있는곳에 걸어준 다음 위에서 설정한 필터에 @WebFilter 어노테이션을 설정해주면 아주 간단하게 끝이 난다.\n\n@ServletComponentScan 설정\n1234567@ServletComponentScan@SpringBootApplicationpublic class Method2Application &#123;\tpublic static void main(String[] args) &#123;\t\tSpringApplication.run(Method2Application.class, args);\t&#125;&#125;\n\n@WebFilter 설정\n12345@Slf4j@WebFilter(urlPatterns = \"/filtered/*\")public class MyFilter implements Filter &#123;\t// 내용 동일&#125;\n\n\n위와 같이 설정하고 동일하게 테스트를 해보면 다음과 같이 필터가 설정된 모습을 확인할 수 있다.\n\n일반 url\n123452020-04-06 23:54:34.330 DEBUG 23720 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET &quot;/test&quot;, parameters=&#123;&#125;2020-04-06 23:54:34.332 DEBUG 23720 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#test()2020-04-06 23:54:34.351 DEBUG 23720 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]2020-04-06 23:54:34.352 DEBUG 23720 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;test&quot;]2020-04-06 23:54:34.357 DEBUG 23720 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK\n\n필터링 url\n12345678// 필터에 들어온것 확인! (위 복붙 아님...)2020-04-06 23:54:58.075  INFO 23720 --- [nio-8080-exec-3] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /filtered/test2020-04-06 23:54:58.076 DEBUG 23720 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET &quot;/filtered/test&quot;, parameters=&#123;&#125;2020-04-06 23:54:58.076 DEBUG 23720 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#filteredTest()2020-04-06 23:54:58.077 DEBUG 23720 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]2020-04-06 23:54:58.077 DEBUG 23720 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;filtered&quot;]2020-04-06 23:54:58.078 DEBUG 23720 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK\n\n\n# url 패턴 설정시 유의해야할 부분처음 url 패턴을 설정할때 “/filtered*“ 으로 설정했더니 아래와 같은 로그를 발견하게 된다.\n1Suspicious URL pattern: [/filtered*] in context [], see sections 12.1 and 12.2 of the Servlet specification\n로그가 “ERROR” 레벨이 아니라서 대수롭지 않게 여겼는데 (사실 보지도 않았다…) 막상 테스트를 해보니 필터가 적용이 안되는 것이다. 하지만 SODD 을 충실히 하는 필자인지라 정답을 금방 찾을 수 있었다. (자랑처럼 보이네…document 를 보는게 더 정확!!!)패턴의 형식이 잘못 되었다는 것. 결국 “/filtered*“ 을 “/filtered/*“ 으로 설정했더니 이상없이 성공. 모든 기술은 도큐먼트를 보고 좀 더 자세하게 확인한 다음 적용해야할 필요가 있다.\n# 필터에 @Component 가 설정되어 있다면?이 내용이 필자가 꼭 이야기 하고 싶었던 부분이다. 보통 “무엇”을 적용하기 위해서는 구글링을 해보거나 도큐먼트를 보기 시작한다. 그래서 적절한 예제코드나 방법을 찾게 되면 바로 적용. 돌려보고 이상없으면 “빨래 ~ 끝” 느낌으로 거기서 끝을 낸다.\n이건 뭐 그냥 하면 되잖아?  출처 : https://www.popmatters.com/161123-strong-weightlifting-as-metaphor-2495831472.html이건 뭐 그냥 하면 되잖아?  출처 : https://www.popmatters.com/161123-strong-weightlifting-as-metaphor-2495831472.html\n왜 그랬던건지는 모르겠지만 필자가 적용한 필터에 “@Component” 가 적용되어 있었고, 필터가 잘 걸리는 것 까지 확인했지만 오히려 모든 url 에 필터가 걸려버린 것이다. 왜일까? 필자가 적용한 필터의 모습은 다음과 같았고\n12345@Component@WebFilter(urlPatterns = \"/filtered/*\")public class MyFilter implements Filter &#123;\t// 동일&#125;\n실제로 실행을 해보면 init 이 두번 되는것을 확인할 수 있다.122020-04-07 02:22:22.250  INFO 27568 --- [           main] c.t.springbootfilter.method2.MyFilter    : init MyFilter2020-04-07 02:22:22.250  INFO 27568 --- [           main] c.t.springbootfilter.method2.MyFilter    : init MyFilter\n위에서 테스트한 “/test” 를 호출해 보면 “doFilter”에서 한번 로깅이 되고 “/filtered/test” 를 호출해 보면 두번 로깅 되는걸 확인할 수 있다.12345678910111213142020-04-07 02:23:50.505  INFO 27568 --- [nio-8080-exec-1] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /test2020-04-07 02:23:50.507 DEBUG 27568 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET &quot;/test&quot;, parameters=&#123;&#125;2020-04-07 02:23:50.510 DEBUG 27568 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#test()2020-04-07 02:23:50.531 DEBUG 27568 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]2020-04-07 02:23:50.531 DEBUG 27568 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;test&quot;]2020-04-07 02:23:50.537 DEBUG 27568 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK2020-04-07 02:24:03.571  INFO 27568 --- [nio-8080-exec-3] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /filtered/test2020-04-07 02:24:03.572  INFO 27568 --- [nio-8080-exec-3] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /filtered/test2020-04-07 02:24:03.572 DEBUG 27568 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET &quot;/filtered/test&quot;, parameters=&#123;&#125;2020-04-07 02:24:03.572 DEBUG 27568 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#filteredTest()2020-04-07 02:24:03.573 DEBUG 27568 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]2020-04-07 02:24:03.573 DEBUG 27568 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;filtered&quot;]2020-04-07 02:24:03.574 DEBUG 27568 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK\n정답은 스프링 부트를 사용하다 보면 가장 처음으로 만나는 “@ComponentScan”와 “@Component”에 있다. “@SpringBootApplication”는 여러 어노테이션의 묶음이고 그 안에는 “@ComponentScan”가 있어서 빈들을 자동으로 등록해주는 역할을 하게 되는데 필터에 “@Component”가 설정되어 있어 자동으로 등록이 되었고, 두번째 방법인 “@WebFilter + @ServletComponentScan” 조합으로 한번 더 등록되어버린 것이다. 즉, 동일한 필터가 두번 등록된 상황.“/test” 에서 한번 로깅된건 “@Component” 에 의해 등록된 필터로 인해 urlPattern 이 적용되지 않았으니 한번 로깅이 되고, urlPattern 이 적용된 필터에서는 urlPattern에 맞지 않으니 로깅이 안되는건 당연. 그 다음 “/filtered/test” 은 “@Component” 에 의해 등록된 필터로 한번 로깅, 그다음 “@WebFilter”로 등록된 필터에서 urlPattern에 맞는 url 이다보니 로깅이 되서 총 두번 로깅이 되게 된다.즉, 모든 url에 필터를 적용 할 것이라면 “@ComponentScan + @Component” 조합으로 해도 될 것 같고, 명시적으로 특정 urlPattern 에만 필터를 적용한다거나 필터의 다양한 설정 (우선순위, 필터이름 등) 을 하게 되는 경우엔 위에서 알려준 “FilterRegistrationBean” 이나 “@WebFilter + @ServletComponentScan”을 사용해서 상황에 맞도록 설정하는게 중요할 것 같다.\n# 마치며좀 알고 쓰자. 실수는 두번하면 실력이다. 다음번엔 절대 실수 안해야지.왜 저렇게 무턱대고 설정했는지 부끄럽기 짝이 없지만 함께 디버깅을 해주며 문제를 해결하는데 도움을 준 black9p 님 덕분에 이렇게 필터 적용방법에 대해 정리를 할 수 있어서 한편으론 다행이라 생각이 든다.\n이번에도 위에서 사용한 코드는 필자의 Github Repo 에서 확인이 가능하다.\n","dateCreated":"2020-04-06T23:59:36+09:00","dateModified":"2020-04-07T02:43:16+09:00","datePublished":"2020-04-06T23:59:36+09:00","description":"웹 어플리케이션에서 필터를 사용하면 중복으로 처리되는 내용을 한곳에서 처리할 수 있다거나 서비스의 다양한 니즈를 충족시키기에 안성맞춤인 장치인것 같다. 필터란 무엇인가 에 대한 내용은 워낙에 다른 블로그나 공식 도큐먼트에서 자세하게 그리고 다양하게 설명하고 있기에 기본 개념에 대해서는 설명하지 않도록 하려 한다.","headline":"스프링 부트에 필터를 '조심해서' 사용하는 두 가지 방법","image":["filter.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2020/04/06/spring-boot-filter/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2020/04/06/spring-boot-filter/","keywords":"spring boot, filter","thumbnailUrl":"filter.jpg"}</script>
+    <meta name="description" content="웹 어플리케이션에서 필터를 사용하면 중복으로 처리되는 내용을 한곳에서 처리할 수 있다거나 서비스의 다양한 니즈를 충족시키기에 안성맞춤인 장치인것 같다. 필터란 무엇인가 에 대한 내용은 워낙에 다른 블로그나 공식 도큐먼트에서 자세하게 그리고 다양하게 설명하고 있기에 기본 개념에 대해서는 설명하지 않도록 하려 한다.">
+<meta name="keywords" content="spring boot,filter">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="스프링 부트에 필터를 &#39;조심해서&#39; 사용하는 두 가지 방법">
+<meta property="og:url" content="https://taetaetae.github.io/2020/04/06/spring-boot-filter/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="웹 어플리케이션에서 필터를 사용하면 중복으로 처리되는 내용을 한곳에서 처리할 수 있다거나 서비스의 다양한 니즈를 충족시키기에 안성맞춤인 장치인것 같다. 필터란 무엇인가 에 대한 내용은 워낙에 다른 블로그나 공식 도큐먼트에서 자세하게 그리고 다양하게 설명하고 있기에 기본 개념에 대해서는 설명하지 않도록 하려 한다.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2020-04-06T17:43:16.413Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="스프링 부트에 필터를 &#39;조심해서&#39; 사용하는 두 가지 방법">
+<meta name="twitter:description" content="웹 어플리케이션에서 필터를 사용하면 중복으로 처리되는 내용을 한곳에서 처리할 수 있다거나 서비스의 다양한 니즈를 충족시키기에 안성맞춤인 장치인것 같다. 필터란 무엇인가 에 대한 내용은 워낙에 다른 블로그나 공식 도큐먼트에서 자세하게 그리고 다양하게 설명하고 있기에 기본 개념에 대해서는 설명하지 않도록 하려 한다.">
+<meta name="twitter:image" content="https://taetaetae.github.io/2020/04/06/spring-boot-filter/spring-request-lifecycle.jpg">
+    
+    
+        
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/2020/04/06/spring-boot-filter/filter.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae.github.io/2020/04/06/spring-boot-filter/filter.jpg" />
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.jpg"/>
+    
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>    
+    <ins class="adsbygoogle"
+   style="display:inline-block;max-width:250px;width:100%;max-height:380px;height:100%"
+   data-ad-client="ca-pub-5788330009690816">
+</ins>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        <script src="https://ads-partners.coupang.com/g.js"></script>
+        <script>
+             new PartnersCoupang.G({
+                 id: 195296,
+                 width: '100%',
+                 height: 120,
+                 bordered: false
+             });
+        </script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            스프링 부트에 필터를 &#39;조심해서&#39; 사용하는 두 가지 방법
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-04-06T23:59:36+09:00">
+	
+		    Apr 06, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/tech/">tech</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>웹 어플리케이션에서 필터를 사용하면 중복으로 처리되는 내용을 한곳에서 처리할 수 있다거나 서비스의 다양한 니즈를 충족시키기에 안성맞춤인 장치인것 같다. 필터란 무엇인가 에 대한 내용은 워낙에 다른 블로그나 공식 도큐먼트에서 자세하게 그리고 다양하게 설명하고 있기에 기본 개념에 대해서는 설명하지 않도록 하려 한다. <a id="more"></a><br>이번 포스팅에서는 스프링 부트를 사용하면서 어노테이션이라는 간편함에 취해(?) “돌격 앞으로, 닥공” 의 자세로 개발을 하려했던 필자를 보고 “반성”의 자세로 필터를 등록하는 방법에 대해 명확하게 정리를 하고자 한다. 마지막으로는 아주 간단하면서도 엄청나게 위험한 필터 설정 사례에 대해서도 짚고 넘어가보자.<br>그냥 넘어가면 아쉬우니, 한번이라도 ‘spring’ 이라는 framework 를 접해본 사람이라면 봤을법한 그림을 첨부하는것으로 필터란 무엇인가 에 대한 설명을 대신하는게 좋겠다.</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="spring-request-lifecycle.jpg" title="출처 : https://justforchangesake.wordpress.com/2014/05/07/spring-mvc-request-life-cycle/" data-caption="출처 : https://justforchangesake.wordpress.com/2014/05/07/spring-mvc-request-life-cycle/" data-fancybox="default"><img class="fig-img" src="spring-request-lifecycle.jpg" alt="출처 : https://justforchangesake.wordpress.com/2014/05/07/spring-mvc-request-life-cycle/"><span class="image-caption">출처 : https://justforchangesake.wordpress.com/2014/05/07/spring-mvc-request-life-cycle/</span></a><span class="caption">출처 : https://justforchangesake.wordpress.com/2014/05/07/spring-mvc-request-life-cycle/</span></div><div style="clear:both;"></div>
+<p>방법을 설명하기 전에 동일하게 사용될 필터와 컨트롤러 코드를 보면 다음과 같다.</p>
+<ul>
+<li><p>필터</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf</span>4j</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyFilter</span> <span class="keyword">implements</span> <span class="title">Filter</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">(FilterConfig filterConfig)</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">		log.info(<span class="string">"init MyFilter"</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doFilter</span><span class="params">(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)</span></span></span><br><span class="line"><span class="function">		<span class="keyword">throws</span> IOException, ServletException </span>&#123;</span><br><span class="line">		log.info(<span class="string">"doFilter MyFilter, uri : &#123;&#125;"</span>, ((HttpServletRequest)servletRequest).getRequestURI());</span><br><span class="line">		filterChain.doFilter(servletRequest, servletResponse);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		log.info(<span class="string">"destroy MyFilter"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>테스트 할 컨트롤러</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf</span>4j</span><br><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SampleController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@GetMapping</span>(<span class="string">"/test"</span>)</span><br><span class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">"test"</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@GetMapping</span>(<span class="string">"/filtered/test"</span>)</span><br><span class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">filteredTest</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">"filtered"</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="방법-1-FilterRegistrationBean"><a href="#방법-1-FilterRegistrationBean" class="headerlink" title="# 방법 1 : FilterRegistrationBean"></a># 방법 1 : FilterRegistrationBean</h3><p>아주 간단하게, 일반 url 하나와 필터에 적용할 url 두개를 만들고 설정하려 한다. FilterRegistrationBean 을 이용해서 위에서 만들었던 필터를 아래처럼 등록해보자.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Method1Application</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		SpringApplication.run(Method1Application.class, args);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Bean</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> FilterRegistrationBean <span class="title">setFilterRegistration</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		FilterRegistrationBean filterRegistrationBean = <span class="keyword">new</span> FilterRegistrationBean(<span class="keyword">new</span> MyFilter());</span><br><span class="line">		<span class="comment">// filterRegistrationBean.setUrlPatterns(Collections.singletonList("/filtered/*")); // list 를 받는 메소드</span></span><br><span class="line">		filterRegistrationBean.addUrlPatterns(<span class="string">"/filtered/*"</span>); <span class="comment">// string 여러개를 가변인자로 받는 메소드</span></span><br><span class="line">		<span class="keyword">return</span> filterRegistrationBean;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>위 주석에도 적었지만 filterRegistrationBean 의 “setUrlPatterns” 와 “addUrlPatterns” 의 차이는 별거 없다. list 자체를 받을건지 아니면 가변인자로 계속 추가 할것인지. 이렇게 되면 “/filtered/“으로 “시작”하는 패턴의 url의 요청이 오게 되면 등록한 필터를 통과하게 된다. </p>
+<ul>
+<li><p>실행 : 필터 생성</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"> /\\ / ___&apos;_ __ _ _(_)_ __  __ _ \ \ \ \</span><br><span class="line">( ( )\___ | &apos;_ | &apos;_| | &apos;_ \/ _` | \ \ \ \</span><br><span class="line"> \\/  ___)| |_)| | | | | || (_| |  ) ) ) )</span><br><span class="line">  &apos;  |____| .__|_| |_|_| |_\__, | / / / /</span><br><span class="line"> =========|_|==============|___/=/_/_/_/</span><br><span class="line"> :: Spring Boot ::        (v2.2.6.RELEASE)</span><br><span class="line"></span><br><span class="line">2020-04-06 23:45:01.225  INFO 14672 --- [           main] c.t.s.method1.Method1Application         : No active profile set, falling back to default profiles: default</span><br><span class="line">2020-04-06 23:45:02.153  INFO 14672 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)</span><br><span class="line">2020-04-06 23:45:02.168  INFO 14672 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]</span><br><span class="line">2020-04-06 23:45:02.168  INFO 14672 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.33]</span><br><span class="line">2020-04-06 23:45:02.361  INFO 14672 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext</span><br><span class="line">2020-04-06 23:45:02.362 DEBUG 14672 --- [           main] o.s.web.context.ContextLoader            : Published root WebApplicationContext as ServletContext attribute with name [org.springframework.web.context.WebApplicationContext.ROOT]</span><br><span class="line">2020-04-06 23:45:02.362  INFO 14672 --- [           main] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 1082 ms</span><br><span class="line">2020-04-06 23:45:02.391 DEBUG 14672 --- [           main] o.s.b.w.s.ServletContextInitializerBeans : Mapping filters: filterRegistrationBean urls=[/filtered/*] order=2147483647, characterEncodingFilter urls=[/*] order=-2147483648, formContentFilter urls=[/*] order=-9900, requestContextFilter urls=[/*] order=-105</span><br><span class="line">2020-04-06 23:45:02.391 DEBUG 14672 --- [           main] o.s.b.w.s.ServletContextInitializerBeans : Mapping servlets: dispatcherServlet urls=[/]</span><br><span class="line">2020-04-06 23:45:02.409 DEBUG 14672 --- [           main] o.s.b.w.s.f.OrderedRequestContextFilter  : Filter &apos;requestContextFilter&apos; configured for use</span><br><span class="line">2020-04-06 23:45:02.409 DEBUG 14672 --- [           main] s.b.w.s.f.OrderedCharacterEncodingFilter : Filter &apos;characterEncodingFilter&apos; configured for use</span><br><span class="line"></span><br><span class="line">// 필터가 생성 되었다!</span><br><span class="line">2020-04-06 23:45:02.410  INFO 14672 --- [           main] c.t.springbootfilter.method1.MyFilter    : init MyFilter</span><br><span class="line"></span><br><span class="line">2020-04-06 23:45:02.410 DEBUG 14672 --- [           main] o.s.b.w.s.f.OrderedFormContentFilter     : Filter &apos;formContentFilter&apos; configured for use</span><br><span class="line">2020-04-06 23:45:02.544  INFO 14672 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService &apos;applicationTaskExecutor&apos;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>일반 url</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">2020-04-06 23:45:27.526 DEBUG 14672 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET &quot;/test&quot;, parameters=&#123;&#125;</span><br><span class="line">2020-04-06 23:45:27.528 DEBUG 14672 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method1.SampleController#test()</span><br><span class="line">2020-04-06 23:45:27.548 DEBUG 14672 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]</span><br><span class="line">2020-04-06 23:45:27.548 DEBUG 14672 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;test&quot;]</span><br><span class="line">2020-04-06 23:45:27.555 DEBUG 14672 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>필터링 url</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// 필터에 들어온것 확인!</span><br><span class="line">2020-04-06 23:45:37.455  INFO 14672 --- [nio-8080-exec-2] c.t.springbootfilter.method1.MyFilter    : doFilter MyFilter, uri : /filtered/test</span><br><span class="line"></span><br><span class="line">2020-04-06 23:45:37.456 DEBUG 14672 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET &quot;/filtered/test&quot;, parameters=&#123;&#125;</span><br><span class="line">2020-04-06 23:45:37.456 DEBUG 14672 --- [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method1.SampleController#filteredTest()</span><br><span class="line">2020-04-06 23:45:37.457 DEBUG 14672 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]</span><br><span class="line">2020-04-06 23:45:37.457 DEBUG 14672 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;filtered&quot;]</span><br><span class="line">2020-04-06 23:45:37.459 DEBUG 14672 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="방법-2-WebFilter-ServletComponentScan"><a href="#방법-2-WebFilter-ServletComponentScan" class="headerlink" title="# 방법 2 : @WebFilter + @ServletComponentScan"></a># 방법 2 : @WebFilter + @ServletComponentScan</h3><p>@ServletComponentScan 어노테이션을 @Configuration 어노테이션이 설정되어 있는곳에 걸어준 다음 위에서 설정한 필터에 @WebFilter 어노테이션을 설정해주면 아주 간단하게 끝이 난다.</p>
+<ul>
+<li><p>@ServletComponentScan 설정</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ServletComponentScan</span></span><br><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Method2Application</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		SpringApplication.run(Method2Application.class, args);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>@WebFilter 설정</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf</span>4j</span><br><span class="line"><span class="meta">@WebFilter</span>(urlPatterns = <span class="string">"/filtered/*"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyFilter</span> <span class="keyword">implements</span> <span class="title">Filter</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 내용 동일</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>위와 같이 설정하고 동일하게 테스트를 해보면 다음과 같이 필터가 설정된 모습을 확인할 수 있다.</p>
+<ul>
+<li><p>일반 url</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">2020-04-06 23:54:34.330 DEBUG 23720 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET &quot;/test&quot;, parameters=&#123;&#125;</span><br><span class="line">2020-04-06 23:54:34.332 DEBUG 23720 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#test()</span><br><span class="line">2020-04-06 23:54:34.351 DEBUG 23720 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]</span><br><span class="line">2020-04-06 23:54:34.352 DEBUG 23720 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;test&quot;]</span><br><span class="line">2020-04-06 23:54:34.357 DEBUG 23720 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>필터링 url</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// 필터에 들어온것 확인! (위 복붙 아님...)</span><br><span class="line">2020-04-06 23:54:58.075  INFO 23720 --- [nio-8080-exec-3] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /filtered/test</span><br><span class="line"></span><br><span class="line">2020-04-06 23:54:58.076 DEBUG 23720 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET &quot;/filtered/test&quot;, parameters=&#123;&#125;</span><br><span class="line">2020-04-06 23:54:58.076 DEBUG 23720 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#filteredTest()</span><br><span class="line">2020-04-06 23:54:58.077 DEBUG 23720 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]</span><br><span class="line">2020-04-06 23:54:58.077 DEBUG 23720 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;filtered&quot;]</span><br><span class="line">2020-04-06 23:54:58.078 DEBUG 23720 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="url-패턴-설정시-유의해야할-부분"><a href="#url-패턴-설정시-유의해야할-부분" class="headerlink" title="# url 패턴 설정시 유의해야할 부분"></a># url 패턴 설정시 유의해야할 부분</h3><p>처음 url 패턴을 설정할때 “/filtered*“ 으로 설정했더니 아래와 같은 로그를 발견하게 된다.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Suspicious URL pattern: [/filtered*] in context [], see sections 12.1 and 12.2 of the Servlet specification</span><br></pre></td></tr></table></figure>
+<p>로그가 “ERROR” 레벨이 아니라서 대수롭지 않게 여겼는데 (사실 보지도 않았다…) 막상 테스트를 해보니 필터가 적용이 안되는 것이다. 하지만 <a href="https://dzone.com/articles/stack-overflow-driven-development-sodd-its-really" target="_blank" rel="noopener">SODD</a> 을 충실히 하는 필자인지라 <a href="https://stackoverflow.com/questions/14223150/mapping-a-specific-servlet-to-be-the-default-servlet-in-tomcat/17565388#17565388" target="_blank" rel="noopener">정답</a>을 금방 찾을 수 있었다. (자랑처럼 보이네…document 를 보는게 더 정확!!!)<br>패턴의 형식이 잘못 되었다는 것. 결국 “/filtered*“ 을 “/filtered/*“ 으로 설정했더니 이상없이 성공. 모든 기술은 도큐먼트를 보고 좀 더 자세하게 확인한 다음 적용해야할 필요가 있다.</p>
+<h3 id="필터에-Component-가-설정되어-있다면"><a href="#필터에-Component-가-설정되어-있다면" class="headerlink" title="# 필터에 @Component 가 설정되어 있다면?"></a># 필터에 @Component 가 설정되어 있다면?</h3><p>이 내용이 필자가 꼭 이야기 하고 싶었던 부분이다. 보통 “무엇”을 적용하기 위해서는 구글링을 해보거나 도큐먼트를 보기 시작한다. 그래서 적절한 예제코드나 방법을 찾게 되면 바로 적용. 돌려보고 이상없으면 “빨래 ~ 끝” 느낌으로 거기서 끝을 낸다.</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="end.jpg" title="이건 뭐 그냥 하면 되잖아? <br> 출처 : https://www.popmatters.com/161123-strong-weightlifting-as-metaphor-2495831472.html" data-caption="이건 뭐 그냥 하면 되잖아? <br> 출처 : https://www.popmatters.com/161123-strong-weightlifting-as-metaphor-2495831472.html" data-fancybox="default"><img class="fig-img" src="end.jpg" alt="이건 뭐 그냥 하면 되잖아? <br> 출처 : https://www.popmatters.com/161123-strong-weightlifting-as-metaphor-2495831472.html"><span class="image-caption">이건 뭐 그냥 하면 되잖아? <br> 출처 : https://www.popmatters.com/161123-strong-weightlifting-as-metaphor-2495831472.html</span></a><span class="caption">이건 뭐 그냥 하면 되잖아? <br> 출처 : https://www.popmatters.com/161123-strong-weightlifting-as-metaphor-2495831472.html</span></div><div style="clear:both;"></div>
+<p>왜 그랬던건지는 모르겠지만 필자가 적용한 필터에 “@Component” 가 적용되어 있었고, 필터가 잘 걸리는 것 까지 확인했지만 오히려 모든 url 에 필터가 걸려버린 것이다. 왜일까? 필자가 적용한 필터의 모습은 다음과 같았고</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@WebFilter</span>(urlPatterns = <span class="string">"/filtered/*"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyFilter</span> <span class="keyword">implements</span> <span class="title">Filter</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 동일</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>실제로 실행을 해보면 init 이 두번 되는것을 확인할 수 있다.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2020-04-07 02:22:22.250  INFO 27568 --- [           main] c.t.springbootfilter.method2.MyFilter    : init MyFilter</span><br><span class="line">2020-04-07 02:22:22.250  INFO 27568 --- [           main] c.t.springbootfilter.method2.MyFilter    : init MyFilter</span><br></pre></td></tr></table></figure></p>
+<p>위에서 테스트한 “/test” 를 호출해 보면 “doFilter”에서 한번 로깅이 되고 “/filtered/test” 를 호출해 보면 두번 로깅 되는걸 확인할 수 있다.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">2020-04-07 02:23:50.505  INFO 27568 --- [nio-8080-exec-1] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /test</span><br><span class="line">2020-04-07 02:23:50.507 DEBUG 27568 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET &quot;/test&quot;, parameters=&#123;&#125;</span><br><span class="line">2020-04-07 02:23:50.510 DEBUG 27568 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#test()</span><br><span class="line">2020-04-07 02:23:50.531 DEBUG 27568 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]</span><br><span class="line">2020-04-07 02:23:50.531 DEBUG 27568 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;test&quot;]</span><br><span class="line">2020-04-07 02:23:50.537 DEBUG 27568 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK</span><br><span class="line"></span><br><span class="line">2020-04-07 02:24:03.571  INFO 27568 --- [nio-8080-exec-3] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /filtered/test</span><br><span class="line">2020-04-07 02:24:03.572  INFO 27568 --- [nio-8080-exec-3] c.t.springbootfilter.method2.MyFilter    : doFilter MyFilter, uri : /filtered/test</span><br><span class="line">2020-04-07 02:24:03.572 DEBUG 27568 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET &quot;/filtered/test&quot;, parameters=&#123;&#125;</span><br><span class="line">2020-04-07 02:24:03.572 DEBUG 27568 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.taetaetae.springbootfilter.method2.SampleController#filteredTest()</span><br><span class="line">2020-04-07 02:24:03.573 DEBUG 27568 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Using &apos;text/html&apos;, given [text/html, application/xhtml+xml, image/webp, image/apng, application/xml;q=0.9, application/signed-exchange;v=b3;q=0.9, */*;q=0.8] and supported [text/plain, */*, text/plain, */*, application/json, application/*+json, application/json, application/*+json]</span><br><span class="line">2020-04-07 02:24:03.573 DEBUG 27568 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Writing [&quot;filtered&quot;]</span><br><span class="line">2020-04-07 02:24:03.574 DEBUG 27568 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK</span><br></pre></td></tr></table></figure></p>
+<p>정답은 스프링 부트를 사용하다 보면 가장 처음으로 만나는 “@ComponentScan”와 “@Component”에 있다. “@SpringBootApplication”는 여러 어노테이션의 묶음이고 그 안에는 “@ComponentScan”가 있어서 빈들을 자동으로 등록해주는 역할을 하게 되는데 필터에 “@Component”가 설정되어 있어 자동으로 등록이 되었고, 두번째 방법인 “@WebFilter + @ServletComponentScan” 조합으로 한번 더 등록되어버린 것이다. 즉, 동일한 필터가 두번 등록된 상황.<br>“/test” 에서 한번 로깅된건 “@Component” 에 의해 등록된 필터로 인해 urlPattern 이 적용되지 않았으니 한번 로깅이 되고, urlPattern 이 적용된 필터에서는 urlPattern에 맞지 않으니 로깅이 안되는건 당연. 그 다음 “/filtered/test” 은 “@Component” 에 의해 등록된 필터로 한번 로깅, 그다음 “@WebFilter”로 등록된 필터에서 urlPattern에 맞는 url 이다보니 로깅이 되서 총 두번 로깅이 되게 된다.<br>즉, 모든 url에 필터를 적용 할 것이라면 “@ComponentScan + @Component” 조합으로 해도 될 것 같고, 명시적으로 특정 urlPattern 에만 필터를 적용한다거나 필터의 다양한 설정 (우선순위, 필터이름 등) 을 하게 되는 경우엔 위에서 알려준 “FilterRegistrationBean” 이나 “@WebFilter + @ServletComponentScan”을 사용해서 상황에 맞도록 설정하는게 중요할 것 같다.</p>
+<h3 id="마치며"><a href="#마치며" class="headerlink" title="# 마치며"></a># 마치며</h3><p>좀 알고 쓰자. 실수는 두번하면 실력이다. 다음번엔 절대 실수 안해야지.<br>왜 저렇게 무턱대고 설정했는지 부끄럽기 짝이 없지만 함께 디버깅을 해주며 문제를 해결하는데 도움을 준 <a href="http://black9p.github.io/" target="_blank" rel="noopener">black9p</a> 님 덕분에 이렇게 필터 적용방법에 대해 정리를 할 수 있어서 한편으론 다행이라 생각이 든다.</p>
+<p>이번에도 위에서 사용한 코드는 필자의 <a href="https://github.com/taetaetae/spring-boot-filter" target="_blank" rel="noopener">Github Repo</a> 에서 확인이 가능하다.</p>
+
+            
+
+        </div>
+    </div>
+    <style>.bmc-button img{width: 27px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{line-height: 36px !important;height:37px !important;text-decoration: none !important;display:inline-flex !important;color:#000000 !important;background-color:#FFDD00 !important;border-radius: 3px !important;border: 1px solid transparent !important;padding: 1px 9px !important;font-size: 22px !important;letter-spacing: 0.6px !important;box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;margin: 0 auto !important;font-family:'Cookie', cursive !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;-o-transition: 0.3s all linear !important;-webkit-transition: 0.3s all linear !important;-moz-transition: 0.3s all linear !important;-ms-transition: 0.3s all linear !important;transition: 0.3s all linear !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#000000 !important;}</style><link href="https://fonts.googleapis.com/css?family=Cookie" rel="stylesheet"><center><br><a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/taetaetae"><img src="https://www.buymeacoffee.com/assets/img/BMC-btn-logo.svg" alt="Buy me a coffee"><span style="margin-left:5px">Buy me a coffee</span></a>
+    <!--<br><a href="http://www.naver.com"><img src="https://i.imgur.com/ietEvly.png" style="height:46px"></a>-->
+    </center>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/filter/">filter</a> <a class="tag tag--primary tag--small t-link" href="/tags/spring-boot/">spring boot</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2020/03/29/better-rest-template-2-netflix-hystrix/" data-tooltip="조금 더 괜찮은 Rest Template 2부 - Circuit-breaker" aria-label="NEXT: 조금 더 괜찮은 Rest Template 2부 - Circuit-breaker">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2020/04/06/spring-boot-filter/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2020/04/06/spring-boot-filter/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2020/04/06/spring-boot-filter/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                
+        <!--  utteranc comment -->
+        
+        <script src="https://utteranc.es/client.js"
+                repo="taetaetae/blog-comment"
+                issue-term="pathname"
+                label="Comment"
+                theme="github-light"
+                crossorigin="anonymous"
+                async>
+        </script>
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2020 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2020/03/29/better-rest-template-2-netflix-hystrix/" data-tooltip="조금 더 괜찮은 Rest Template 2부 - Circuit-breaker" aria-label="NEXT: 조금 더 괜찮은 Rest Template 2부 - Circuit-breaker">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2020/04/06/spring-boot-filter/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2020/04/06/spring-boot-filter/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2020/04/06/spring-boot-filter/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a class="post-action-btn btn btn--default" href="#disqus_thread">
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2020/04/06/spring-boot-filter/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2020/04/06/spring-boot-filter/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2020/04/06/spring-boot-filter/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+        <script>
+             var disqus_config = function () {
+                 this.page.url = 'https://taetaetae.github.io/2020/04/06/spring-boot-filter/';
+                 
+                    this.page.identifier = '2020/04/06/spring-boot-filter/';
+                 
+             };
+            (function() {
+                var d = document, s = d.createElement('script');
+                var disqus_shortname = 'taetaetae';
+                s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+    
+
+
+
+    </body>
+</html>
