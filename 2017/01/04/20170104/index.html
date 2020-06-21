@@ -13,7 +13,7 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"1. 디렉티브방식1&lt;%@ include file=\"~~\"%&gt;\n\n정적 include 방식, 인클루드 되는 내용이 단순하게 텍스트로 포함되어 컴파일이 된다. (복사된다는 느낌)\n주의할점은 비록 포함되는 페이지라 하더라도 한글을 제대로 처리하기 위해서는 포함되어지는 jsp파일 상단에 인코딩 명시를 해줘야 한다.\n포함되어지는 jsp 내용이 변경이 될 경우 해당 jsp를 사용하는 jsp를 강제로 변경(touch) 해줘서 다시 컴파일이 되게 해야하는 불편함이 있다.\n정적 방식이기 때문에 예로들어 전역변수를 인클루드 되는 jsp에서 지정하게 되면 상위jsp에서 사용이 가능하게 된다.\n\n2. 액션태그 방식1&lt;jsp:include page=\"~~\"/&gt;\n\n동적 include 방식, 포함하는 문서와 상관없이 동적으로 컴파일 된다. (완전히 별도로 동작하기 때문에 변수를 동시에 사용하려면 따로 파라미터로 넘겨줘야 한다.)\nflush 옵션은 요청흐름이 넘어가면서 현재까지 페이지의 결과를 출력할 것인지 말것인지를 결정하는것이다. 일반적으로 false로 설정한다.\n&lt;jsp:param&gt;를 이용하여 파라미터를 전송할수 있다.1234&lt;jsp:include page=\"...\" flush=\"false\"&gt;  &lt;jsp:param name=\"name\" value=\"이름\" /&gt;  &lt;jsp:param name=\"pageName\" value=\"페이지이름\"/&gt;&lt;/jsp:include&gt;\n\n\n3. JSTL 방식1&lt;c:import url=\"~~\" /&gt;\n\nJSTL(JSP Standard Tag Library) 태그중의 하나\n컴파일 되고 동작하는 방식은 액션태그&lt;jsp:include page=&quot;~~&quot;/&gt;와 같음\n현재 컨테이너 안에 있는 자원외에 다른 외부 자원도 포함이 가능하다.\n\n1&lt;c:import url=\"http://www.google.com/\"/&gt;\n\n아래와 같이 보다 더 다양한 옵션이 제공된다12345&lt;c:import! url=&quot;읽어올 URL&quot;     var=&quot;읽어올 데이터를 저장할 변수명&quot;     scope=&quot;변수의 공유 범위&quot;     varReader=&quot;리소스의 내용을 Reader 객체로 읽어올 때 사용&quot;     charEncoding=&quot;읽어온 데이터의 캐릭터셋 지정&quot; /&gt;\n\n\n","dateCreated":"2017-01-04T18:36:17+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2017-01-04T18:36:17+09:00","description":"1. 디렉티브방식1&lt;%@ include file=\"~~\"%&gt;\n\n정적 include 방식, 인클루드 되는 내용이 단순하게 텍스트로 포함되어 컴파일이 된다. (복사된다는 느낌)","headline":"jsp include","image":[null,"jsp.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/01/04/20170104/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2017/01/04/20170104/","keywords":"jsp","thumbnailUrl":"jsp.png"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"1. 디렉티브방식1&lt;%@ include file=\"~~\"%&gt;\n\n정적 include 방식, 인클루드 되는 내용이 단순하게 텍스트로 포함되어 컴파일이 된다. (복사된다는 느낌)\n주의할점은 비록 포함되는 페이지라 하더라도 한글을 제대로 처리하기 위해서는 포함되어지는 jsp파일 상단에 인코딩 명시를 해줘야 한다.\n포함되어지는 jsp 내용이 변경이 될 경우 해당 jsp를 사용하는 jsp를 강제로 변경(touch) 해줘서 다시 컴파일이 되게 해야하는 불편함이 있다.\n정적 방식이기 때문에 예로들어 전역변수를 인클루드 되는 jsp에서 지정하게 되면 상위jsp에서 사용이 가능하게 된다.\n\n2. 액션태그 방식1&lt;jsp:include page=\"~~\"/&gt;\n\n동적 include 방식, 포함하는 문서와 상관없이 동적으로 컴파일 된다. (완전히 별도로 동작하기 때문에 변수를 동시에 사용하려면 따로 파라미터로 넘겨줘야 한다.)\nflush 옵션은 요청흐름이 넘어가면서 현재까지 페이지의 결과를 출력할 것인지 말것인지를 결정하는것이다. 일반적으로 false로 설정한다.\n&lt;jsp:param&gt;를 이용하여 파라미터를 전송할수 있다.1234&lt;jsp:include page=\"...\" flush=\"false\"&gt;  &lt;jsp:param name=\"name\" value=\"이름\" /&gt;  &lt;jsp:param name=\"pageName\" value=\"페이지이름\"/&gt;&lt;/jsp:include&gt;\n\n\n3. JSTL 방식1&lt;c:import url=\"~~\" /&gt;\n\nJSTL(JSP Standard Tag Library) 태그중의 하나\n컴파일 되고 동작하는 방식은 액션태그&lt;jsp:include page=&quot;~~&quot;/&gt;와 같음\n현재 컨테이너 안에 있는 자원외에 다른 외부 자원도 포함이 가능하다.\n\n1&lt;c:import url=\"http://www.google.com/\"/&gt;\n\n아래와 같이 보다 더 다양한 옵션이 제공된다12345&lt;c:import! url=&quot;읽어올 URL&quot;     var=&quot;읽어올 데이터를 저장할 변수명&quot;     scope=&quot;변수의 공유 범위&quot;     varReader=&quot;리소스의 내용을 Reader 객체로 읽어올 때 사용&quot;     charEncoding=&quot;읽어온 데이터의 캐릭터셋 지정&quot; /&gt;\n\n\n","dateCreated":"2017-01-04T18:36:17+09:00","dateModified":"2020-04-23T13:41:36+09:00","datePublished":"2017-01-04T18:36:17+09:00","description":"1. 디렉티브방식1&lt;%@ include file=\"~~\"%&gt;\n\n정적 include 방식, 인클루드 되는 내용이 단순하게 텍스트로 포함되어 컴파일이 된다. (복사된다는 느낌)","headline":"jsp include","image":[null,"jsp.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/01/04/20170104/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2017/01/04/20170104/","keywords":"jsp","thumbnailUrl":"jsp.png"}</script>
     <meta name="description" content="1. 디렉티브방식1&amp;lt;%@ include file=&quot;~~&quot;%&amp;gt;  정적 include 방식, 인클루드 되는 내용이 단순하게 텍스트로 포함되어 컴파일이 된다. (복사된다는 느낌)">
 <meta name="keywords" content="jsp">
 <meta property="og:type" content="blog">
@@ -22,7 +22,7 @@
 <meta property="og:site_name" content="꿈꾸는 태태태의 공간">
 <meta property="og:description" content="1. 디렉티브방식1&amp;lt;%@ include file=&quot;~~&quot;%&amp;gt;  정적 include 방식, 인클루드 되는 내용이 단순하게 텍스트로 포함되어 컴파일이 된다. (복사된다는 느낌)">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-05-30T08:14:51.700Z">
+<meta property="og:updated_time" content="2020-04-23T04:41:36.633Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="jsp include">
 <meta name="twitter:description" content="1. 디렉티브방식1&amp;lt;%@ include file=&quot;~~&quot;%&amp;gt;  정적 include 방식, 인클루드 되는 내용이 단순하게 텍스트로 포함되어 컴파일이 된다. (복사된다는 느낌)">
@@ -296,15 +296,6 @@
 <script>
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
-        <script src="https://ads-partners.coupang.com/g.js"></script>
-        <script>
-             new PartnersCoupang.G({
-                 id: 195296,
-                 width: '100%',
-                 height: 120,
-                 bordered: false
-             });
-        </script>
     </div>
     
     

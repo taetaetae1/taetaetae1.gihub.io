@@ -13,7 +13,7 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"이제까지 내 기억으로는 Date 관련 클래스를 아래처럼 점차 바꿔써온걸로 기억이 난다.java.util.Date &gt; java.util.Calendar &gt; org.joda.time그런데 java 8 버전에서 기존에 있었던 문제들을 개선해서 나왔다고 한다. (네이버 HellowWorld 포스팅 참고) JSR-310 이라는 표준명세로.지금부터는 JAVA 8 에서 제공하는 API로 날짜 연산을 어떻게 하는지에 대해 알아보고자 한다. (물론 수많은 날짜 연산 방법을이 있지만 자주 쓰이는 부분들 위주로 정리해보자.)\n\nDate &gt; String (format)\n\n1LocalDateTime.now().format(DateTimeFormatter.ofPattern(\"yyyy-MM-dd\"));\n\nString &gt; Date (format)\n\n1LocalDateTime.parse(\"2017-01-01 12:30:00\", DateTimeFormatter.ofPattern(\"yyyy-MM-dd HH:mm:ss\"));\n\n날짜/시간 증감\n\n1234567LocalDateTime localDateTime = LocalDateTime.of(2017, 1, 1, 10, 0, 0);localDateTime.plusDays(1);  // 일localDateTime.plusMonths(1);  // 월localDateTime.plusHours(1); // 시간localDateTime.plusWeeks(1); // 주localDateTime.minusYears(1);  // 년localDateTime.minusMinutes(1);  // 분\n더 다양한 내용들은 아래 URL 에서 확인이 가능하다.https://docs.oracle.com/javase/tutorial/datetime/iso/overview.html\n","dateCreated":"2017-01-10T20:55:33+09:00","dateModified":"2019-05-30T17:14:51+09:00","datePublished":"2017-01-10T20:55:33+09:00","description":"이제까지 내 기억으로는 Date 관련 클래스를 아래처럼 점차 바꿔써온걸로 기억이 난다.java.util.Date &gt; java.util.Calendar &gt; org.joda.time그런데 java 8 버전에서 기존에 있었던 문제들을 개선해서 나왔다고 한다. (네이버 HellowWorld 포스팅 참고) JSR-310 이라는 표준명세로.","headline":"자바 8 Date","image":[null,"java_date.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/01/10/java8-date/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2017/01/10/java8-date/","keywords":"java, date","thumbnailUrl":"java_date.png"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"이제까지 내 기억으로는 Date 관련 클래스를 아래처럼 점차 바꿔써온걸로 기억이 난다.java.util.Date &gt; java.util.Calendar &gt; org.joda.time그런데 java 8 버전에서 기존에 있었던 문제들을 개선해서 나왔다고 한다. (네이버 HellowWorld 포스팅 참고) JSR-310 이라는 표준명세로.지금부터는 JAVA 8 에서 제공하는 API로 날짜 연산을 어떻게 하는지에 대해 알아보고자 한다. (물론 수많은 날짜 연산 방법을이 있지만 자주 쓰이는 부분들 위주로 정리해보자.)\n\nDate &gt; String (format)\n\n1LocalDateTime.now().format(DateTimeFormatter.ofPattern(\"yyyy-MM-dd\"));\n\nString &gt; Date (format)\n\n1LocalDateTime.parse(\"2017-01-01 12:30:00\", DateTimeFormatter.ofPattern(\"yyyy-MM-dd HH:mm:ss\"));\n\n날짜/시간 증감\n\n1234567LocalDateTime localDateTime = LocalDateTime.of(2017, 1, 1, 10, 0, 0);localDateTime.plusDays(1);  // 일localDateTime.plusMonths(1);  // 월localDateTime.plusHours(1); // 시간localDateTime.plusWeeks(1); // 주localDateTime.minusYears(1);  // 년localDateTime.minusMinutes(1);  // 분\n더 다양한 내용들은 아래 URL 에서 확인이 가능하다.https://docs.oracle.com/javase/tutorial/datetime/iso/overview.html\n","dateCreated":"2017-01-10T20:55:33+09:00","dateModified":"2020-04-23T13:41:36+09:00","datePublished":"2017-01-10T20:55:33+09:00","description":"이제까지 내 기억으로는 Date 관련 클래스를 아래처럼 점차 바꿔써온걸로 기억이 난다.java.util.Date &gt; java.util.Calendar &gt; org.joda.time그런데 java 8 버전에서 기존에 있었던 문제들을 개선해서 나왔다고 한다. (네이버 HellowWorld 포스팅 참고) JSR-310 이라는 표준명세로.","headline":"자바 8 Date","image":[null,"java_date.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2017/01/10/java8-date/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2017/01/10/java8-date/","keywords":"java, date","thumbnailUrl":"java_date.png"}</script>
     <meta name="description" content="이제까지 내 기억으로는 Date 관련 클래스를 아래처럼 점차 바꿔써온걸로 기억이 난다.java.util.Date &amp;gt; java.util.Calendar &amp;gt; org.joda.time그런데 java 8 버전에서 기존에 있었던 문제들을 개선해서 나왔다고 한다. (네이버 HellowWorld 포스팅 참고) JSR-310 이라는 표준명세로.">
 <meta name="keywords" content="java,date">
 <meta property="og:type" content="blog">
@@ -22,7 +22,7 @@
 <meta property="og:site_name" content="꿈꾸는 태태태의 공간">
 <meta property="og:description" content="이제까지 내 기억으로는 Date 관련 클래스를 아래처럼 점차 바꿔써온걸로 기억이 난다.java.util.Date &amp;gt; java.util.Calendar &amp;gt; org.joda.time그런데 java 8 버전에서 기존에 있었던 문제들을 개선해서 나왔다고 한다. (네이버 HellowWorld 포스팅 참고) JSR-310 이라는 표준명세로.">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-05-30T08:14:51.716Z">
+<meta property="og:updated_time" content="2020-04-23T04:41:36.771Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="자바 8 Date">
 <meta name="twitter:description" content="이제까지 내 기억으로는 Date 관련 클래스를 아래처럼 점차 바꿔써온걸로 기억이 난다.java.util.Date &amp;gt; java.util.Calendar &amp;gt; org.joda.time그런데 java 8 버전에서 기존에 있었던 문제들을 개선해서 나왔다고 한다. (네이버 HellowWorld 포스팅 참고) JSR-310 이라는 표준명세로.">
@@ -296,15 +296,6 @@
 <script>
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
-        <script src="https://ads-partners.coupang.com/g.js"></script>
-        <script>
-             new PartnersCoupang.G({
-                 id: 195296,
-                 width: '100%',
-                 height: 120,
-                 bordered: false
-             });
-        </script>
     </div>
     
     
