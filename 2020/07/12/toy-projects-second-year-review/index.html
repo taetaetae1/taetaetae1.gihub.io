@@ -1,0 +1,608 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="꿈꾸는 태태태의 공간">
+    <title>벌써 2년 (feat. 토이프로젝트 회고,가치,수입) - 꿈꾸는 태태태의 공간</title>
+    <meta name="author" content="taetaetae">
+    
+    
+    
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"　정확히 2018년 07월 12일 필자의 첫 토이 프로젝트인 ‘기술 블로그 구독 서비스’를 오픈하게 된다. 얼마나 많이 구독(가입) 하겠어 하는 생각이 부끄러울 만큼 6개월이 지나 구독자 수는 1,000명을 넘기고 1년이 지나 2,000명. 어느덧 달력을 보니 오늘이 정확하게 토이 프로젝트를 서비스한지 벌써 2년이 되는 날. 구독자 수는 어느덧 3,000명을 넘어선다. 뭔가 뿌듯하면서도 서비스를 좀 더 디벨롭 하지 못한 필자 자신을 돌아보니 괜히 마음이 무거워지고.뭔가 해야하는데... 괜히 눈치만 보이네...출처 : http://egloos.zum.com/nievess/v/657827뭔가 해야하는데... 괜히 눈치만 보이네...출처 : http://egloos.zum.com/nievess/v/657827\n　지난 2년 동안을 돌이켜보며 서비스를 어떻게 운영해 왔는지, 그리고 토이 프로젝트가 필자에게 어떤 영향을 주었는지 되돌아보며 셀프 리뷰를 해 보고자 한다.\n# 서비스 자체 평가✓ 심플한 기능　말 그대로 토이 프로젝트이기 때문에 기능 또한 아주 간단하다. awesome-devblog에서 제공하는 개인/단체 블로그들의 포스팅을 조회하여 어제 작성된 글들만 모아 발송한다. 거기에 주간 많이 클릭된 포스팅을 모아서 한 번 더 발송하는 기능까지. 추가적인 기능을 더 디벨롭 해야 하는데 아이디어가 없어서 인지 디벨롭 할 힘이 안 나서 인지 유지만 하고 있는 상태다.\n✓ 서비스에 없어서는 안될 ‘로깅(Logging)’　형식을 막론하고 컴퓨터로 돌아가는 모든 ‘프로그램’은 상황에 따라 미리 만들어 놓은 로직에 따라 움직이는 로봇에 불과하다. 물론 요즘에는 머신러닝이나 AI 같은 기술들로 컴퓨터가 스스로 학습하는 경우도 있지만 그 또한 미리 코딩을 통해 만들어진 부분들. 그렇기 때문에 2년이 지난 지금 이제까지 서비스가 어떻게 돌아갔는지를 확인하기 위해서는 사전에 준비해야 할 것이 있다. 그것은 바로 ‘로깅’. 서비스 투입 전부터 프론트부터 백엔드까지 다양한 로깅을 해서인지 2년이 지난 지금, 기록된 로그로 다양한 서비스 지표를 확인해 볼 수 있음에 다행이라 생각한다.\n✓ 각종 지표　먼저 봐야 할 지표는 당연히 가입/해지 추이. 드라마틱 한 선형 그래프는 아니지만 당연히(?) 해지 보다 가입이 더 많고 시간이 지날수록 어느 정도 꾸준하게 가입자가 들어오는 것을 보면 어떻게 알고 가입을 하러 오는지 신기할 따름이다. 하지만 마냥 신기해하지만 말고 해지하는 원인을 분석해야 할 필요가 있어 보인다. 아마도 수집하는 블로그들 중 간혹 개발과 관련되지 않는 글들이 종종 수집되어서 그런 것 같기도 하다.가입/해지 트랜드가입/해지 트랜드\n　다음으로는 클릭수. 눈치가 빠른 분들은 이미 알고 있겠지만 이메일에서 클릭 시 서버에서 각종 로깅을 하고 넘어가게 된다. 그러다 보니 클릭 성향(?)에 대해 집계도 가능한데 아래 지표를 보면 오전 일과를 시작하면서 메일로 종합된 기술 블로그 들을 읽기 시작하고 그중에서 특히 월요일 - 10시가 가장 많은 클릭수가 집계되었다.클릭수 트랜드 | 시간+요일 별 클릭수 트랜드 | 시간+요일 별 클릭수 히트맵클릭수 트랜드 | 시간+요일 별 클릭수 트랜드 | 시간+요일 별 클릭수 히트맵\n　이 포스팅을 작성하고 있는 지금까지 약 19,000여 개의 포스팅을 수집하고 발행하였는데 그중에서 가장 인기 있었던 포스팅 TOP 30 은 다음과 같다. 아무래도 단체 블로그의 포스팅을 메일 상단에 위치하고 노란색으로 테두리를 표시해서인지 대부분의 글들이 단체 블로그의 포스팅인 것을 알 수 있다.\n\n이 회사, 이 세상 쿨함이 아니다\n대놓고 자랑하는 글\nLINE 신입 SW 개발자 코딩 테스트, 이렇게 만들어졌습니다\n우테코에서 찾은 나만의 효과적인 공부법\nLINE 서버 개발자가 되기까지 내가 준비한 것들\n연봉을 높이는 가장 쉬운 방법은?\n학교에서 알려주지 않는 17가지 실무 개발 기술 리뷰\n간단하게 만드는 이상한 알람\n팀 문화의 탄생\nLINE에서 전 직원이 재택 근무하면서 생산성을 유지하는 방법\nFlutter, 왜 선택하지 못했나\n주석 달 시간에 프로그래밍을 제대로 하기\n우아한테크코스 : 새로운 시작\n기획자는 필요없다.\n간단하게 구축해 보는 JavaScript 개발 환경\n우아한테크코스 : 나만의 항로 찾기\n코드리뷰 모음 서비스를 소개합니다.\nNAVER Tech Talk: Android 밋업(2018년 11월, 2019년 11월)\n2019년과 이후 JavaScript의 동향 - JavaScript(ECMAScript)\n타다 웹 프론트엔드의 모든 것\n개발 문화, 사무실 문화\n그런 개발자로 괜찮은가 - 자기개발 편\n주니어 개발자의 클린 아키텍처 맛보기\n우리도 채팅있으면 좋을 것 같아요.\n코드 가독성에 대해 – 1. 도입과 원칙\n메인 데이터베이스 IDC 탈출 성공기\n코드 가독성에 대해 – 3. 상태와 절차\n그런 개발자로 괜찮은가 - 문화 편\n[2019. 9. 3] 카페24 개발자 세미나\n진짜 카카오 티스토리 서비스 개판이다\n\n그렇다면 수익은 얼마나 있었을까? 음?! 이 서비스의 수익이 있다고?? 우선 아래 차트를 보자.\ny축이 거꾸로. 그렇다. 가슴시린 차트. 수익은 당연히 마이너스.y축이 거꾸로. 그렇다. 가슴시린 차트. 수익은 당연히 마이너스.\n　최초 무료 도메인을 받아서 사용했지만 메일 발송 시 스팸으로 발송되는 등 여러 가지 이슈들 때문에 어쩔 수 없이 도메인을 구입하게 된다. (년 단위 결제) 거기에 AWS 프리 티어도 기간이 만료되어 사용하는 만큼 비용이 발생하고. ( Route53(트래픽), EC2(서버 운영), SES(메일 발송) ) 월평균 5만 원 내외를 AWS에 지불하며 서비스를 운영하고 있다. (2년 동안 서버 운영비만 벌써 약 42만원…ㅠㅠ) 후원 버튼을 달아놓았지만 전혀 효과가 없어 아쉬울 따름이다…\n# 토이프로젝트가 내게 준것들　토이 프로젝트를 2년 동안 진행하며 진행하기 전과 후를 비교했을 때 가장 좋았던 점은 실무에서도 찾기 어려운 ‘책임감’과 ‘또 다른 지식’을 자연스럽게 얻을 수 있었다는 점이다. (지금은 안정화되어 그렇진 않지만) 매일 오전 9시 50분이 되면 항상 긴장상태로 메일 앱을 키고 기다린다. 내가 만든 서비스에서 메일이 안 오기라도 하면 바로 서버에 들어가 에러 원인을 찾고, 밤새 원인을 찾아 헤매다, 복구하고 다시 또 반복. 지금 생각하면 너무 힘들었던, 포기하고 싶었던 순간들이지만 그 시절이 필자에게는 무엇보다도 소중하고 값진 경험들로 가득 채워질 수 있었음에 감사함을 느낀다.　실무에서는 java로 웹서비스를 개발하다 보니 다른 언어를 배울 기회가 없었는데 이 토이 프로젝트를 하면서 처음으로 파이썬이라는 것을 알게 되었고, 물리 장비(혹은 VM) 위에서 운영되는 정통적인 웹서비스만 운영하다 이 기회를 통해 AWS를 접해볼 수 있었고, 사용자가 하나둘 늘어남에 따라 제한적인 자원 내에서 효율적인 성능을 내기 위한 고민을 하게 되고. 실무에서 배우지 못한 값진 경험들을 할 수 있어서 너무 좋았다.\n# 마치며　핑계지만 서비스를 좀 더 디벨롭 해야 하는데 못하고 있다. 회사 바쁜 일만 어느 정도 끝나면 처음부터 다시 설계하여 보다 안정적인 서비스를 만들어 보고 싶다. 나아가 지금은 ‘돈 잃는’ 서비스를 운영 중인데 비즈니스 모델을 고민해서 ‘돈 버는’ 서비스로 바꿀 수 있을지… 가 가장 고민 포인트다. 조언이나 제안은 언제든지 환영이다.\n","dateCreated":"2020-07-12T19:55:02+09:00","dateModified":"2020-07-13T00:53:48+09:00","datePublished":"2020-07-12T19:55:02+09:00","description":"　정확히 2018년 07월 12일 필자의 첫 토이 프로젝트인 ‘기술 블로그 구독 서비스’를 오픈하게 된다. 얼마나 많이 구독(가입) 하겠어 하는 생각이 부끄러울 만큼 6개월이 지나 구독자 수는 1,000명을 넘기고 1년이 지나 2,000명.","headline":"벌써 2년 (feat. 토이프로젝트 회고,가치,수입)","image":["ddb.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/","thumbnailUrl":"ddb.jpg"}</script>
+    <meta name="description" content="정확히 2018년 07월 12일 필자의 첫 토이 프로젝트인 ‘기술 블로그 구독 서비스’를 오픈하게 된다. 얼마나 많이 구독(가입) 하겠어 하는 생각이 부끄러울 만큼 6개월이 지나 구독자 수는 1,000명을 넘기고 1년이 지나 2,000명.">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="벌써 2년 (feat. 토이프로젝트 회고,가치,수입)">
+<meta property="og:url" content="https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/index.html">
+<meta property="og:site_name" content="꿈꾸는 태태태의 공간">
+<meta property="og:description" content="정확히 2018년 07월 12일 필자의 첫 토이 프로젝트인 ‘기술 블로그 구독 서비스’를 오픈하게 된다. 얼마나 많이 구독(가입) 하겠어 하는 생각이 부끄러울 만큼 6개월이 지나 구독자 수는 1,000명을 넘기고 1년이 지나 2,000명.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2020-07-12T15:53:48.711Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="벌써 2년 (feat. 토이프로젝트 회고,가치,수입)">
+<meta name="twitter:description" content="정확히 2018년 07월 12일 필자의 첫 토이 프로젝트인 ‘기술 블로그 구독 서비스’를 오픈하게 된다. 얼마나 많이 구독(가입) 하겠어 하는 생각이 부끄러울 만큼 6개월이 지나 구독자 수는 1,000명을 넘기고 1년이 지나 2,000명.">
+<meta name="twitter:image" content="https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/dog.jpg">
+    
+    
+        
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/ddb.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/ddb.jpg" />
+    
+    
+    
+        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.jpg"/>
+    
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-86432198-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: "ca-pub-5788330009690816",
+  enable_page_level_ads: true
+  });
+</script>
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="5">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">꿈꾸는 태태태의 공간</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+            <img class="header-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="5">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a href="/#about">
+                    <img class="sidebar-profile-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">taetaetae</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Programmer</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Categories"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archives"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="About"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/taetaetae0" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/in/태관-권-517825129/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="mailto:taetaetae_@naver.com" target="_blank" rel="noopener" title="Mail">
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>    
+    <ins class="adsbygoogle"
+   style="display:inline-block;max-width:250px;width:100%;max-height:380px;height:100%"
+   data-ad-client="ca-pub-5788330009690816">
+</ins>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</nav>
+
+            
+            <div id="main" data-behavior="5"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    <div class="main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            벌써 2년 (feat. 토이프로젝트 회고,가치,수입)
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-07-12T19:55:02+09:00">
+	
+		    Jul 12, 2020
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="/categories/review/">review</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>　정확히 2018년 07월 12일 필자의 첫 토이 프로젝트인 ‘기술 블로그 구독 서비스’를 오픈하게 된다. 얼마나 많이 구독(가입) 하겠어 하는 생각이 부끄러울 만큼 6개월이 지나 구독자 수는 1,000명을 넘기고 1년이 지나 2,000명.<a id="more"></a> 어느덧 달력을 보니 오늘이 정확하게 토이 프로젝트를 서비스한지 벌써 2년이 되는 날. 구독자 수는 어느덧 3,000명을 넘어선다. 뭔가 뿌듯하면서도 서비스를 좀 더 디벨롭 하지 못한 필자 자신을 돌아보니 괜히 마음이 무거워지고.<br><div class="figure center" style="width:;"><a class="fancybox" href="dog.jpg" title="뭔가 해야하는데... 괜히 눈치만 보이네...<br>출처 : http://egloos.zum.com/nievess/v/657827" data-caption="뭔가 해야하는데... 괜히 눈치만 보이네...<br>출처 : http://egloos.zum.com/nievess/v/657827" data-fancybox="default"><img class="fig-img" src="dog.jpg" alt="뭔가 해야하는데... 괜히 눈치만 보이네...<br>출처 : http://egloos.zum.com/nievess/v/657827"><span class="image-caption">뭔가 해야하는데... 괜히 눈치만 보이네...<br>출처 : http://egloos.zum.com/nievess/v/657827</span></a><span class="caption">뭔가 해야하는데... 괜히 눈치만 보이네...<br>출처 : http://egloos.zum.com/nievess/v/657827</span></div><div style="clear:both;"></div></p>
+<p>　지난 2년 동안을 돌이켜보며 서비스를 어떻게 운영해 왔는지, 그리고 토이 프로젝트가 필자에게 어떤 영향을 주었는지 되돌아보며 셀프 리뷰를 해 보고자 한다.</p>
+<h3 id="서비스-자체-평가"><a href="#서비스-자체-평가" class="headerlink" title="# 서비스 자체 평가"></a># 서비스 자체 평가</h3><h5 id="✓-심플한-기능"><a href="#✓-심플한-기능" class="headerlink" title="✓ 심플한 기능"></a>✓ 심플한 기능</h5><p>　말 그대로 토이 프로젝트이기 때문에 기능 또한 아주 간단하다. <a href="https://github.com/sarojaba/awesome-devblog" target="_blank" rel="noopener">awesome-devblog</a>에서 제공하는 개인/단체 블로그들의 포스팅을 조회하여 어제 작성된 글들만 모아 발송한다. 거기에 주간 많이 클릭된 포스팅을 모아서 한 번 더 발송하는 기능까지. 추가적인 기능을 더 디벨롭 해야 하는데 아이디어가 없어서 인지 디벨롭 할 힘이 안 나서 인지 유지만 하고 있는 상태다.</p>
+<h5 id="✓-서비스에-없어서는-안될-‘로깅-Logging-’"><a href="#✓-서비스에-없어서는-안될-‘로깅-Logging-’" class="headerlink" title="✓ 서비스에 없어서는 안될 ‘로깅(Logging)’"></a>✓ 서비스에 없어서는 안될 ‘로깅(Logging)’</h5><p>　형식을 막론하고 컴퓨터로 돌아가는 모든 ‘프로그램’은 상황에 따라 미리 만들어 놓은 로직에 따라 움직이는 로봇에 불과하다. 물론 요즘에는 머신러닝이나 AI 같은 기술들로 컴퓨터가 스스로 학습하는 경우도 있지만 그 또한 미리 코딩을 통해 만들어진 부분들. 그렇기 때문에 2년이 지난 지금 이제까지 서비스가 어떻게 돌아갔는지를 확인하기 위해서는 사전에 준비해야 할 것이 있다. 그것은 바로 ‘로깅’. 서비스 투입 전부터 프론트부터 백엔드까지 다양한 로깅을 해서인지 2년이 지난 지금, 기록된 로그로 다양한 서비스 지표를 확인해 볼 수 있음에 다행이라 생각한다.</p>
+<h5 id="✓-각종-지표"><a href="#✓-각종-지표" class="headerlink" title="✓ 각종 지표"></a>✓ 각종 지표</h5><p>　먼저 봐야 할 지표는 당연히 가입/해지 추이. 드라마틱 한 선형 그래프는 아니지만 당연히(?) 해지 보다 가입이 더 많고 시간이 지날수록 어느 정도 꾸준하게 가입자가 들어오는 것을 보면 어떻게 알고 가입을 하러 오는지 신기할 따름이다. 하지만 마냥 신기해하지만 말고 해지하는 원인을 분석해야 할 필요가 있어 보인다. 아마도 수집하는 블로그들 중 간혹 개발과 관련되지 않는 글들이 종종 수집되어서 그런 것 같기도 하다.<br><div class="figure center" style="width:;"><a class="fancybox" href="regist.jpg" title="가입/해지 트랜드" data-caption="가입/해지 트랜드" data-fancybox="default"><img class="fig-img" src="regist.jpg" alt="가입/해지 트랜드"><span class="image-caption">가입/해지 트랜드</span></a><span class="caption">가입/해지 트랜드</span></div><div style="clear:both;"></div></p>
+<p>　다음으로는 클릭수. 눈치가 빠른 분들은 이미 알고 있겠지만 이메일에서 클릭 시 서버에서 각종 로깅을 하고 넘어가게 된다. 그러다 보니 클릭 성향(?)에 대해 집계도 가능한데 아래 지표를 보면 오전 일과를 시작하면서 메일로 종합된 기술 블로그 들을 읽기 시작하고 그중에서 특히 월요일 - 10시가 가장 많은 클릭수가 집계되었다.<br><div class="figure center" style="width:;"><a class="fancybox" href="click.jpg" title="클릭수 트랜드 | 시간+요일 별 클릭수 트랜드 | 시간+요일 별 클릭수 히트맵" data-caption="클릭수 트랜드 | 시간+요일 별 클릭수 트랜드 | 시간+요일 별 클릭수 히트맵" data-fancybox="default"><img class="fig-img" src="click.jpg" alt="클릭수 트랜드 | 시간+요일 별 클릭수 트랜드 | 시간+요일 별 클릭수 히트맵"><span class="image-caption">클릭수 트랜드 | 시간+요일 별 클릭수 트랜드 | 시간+요일 별 클릭수 히트맵</span></a><span class="caption">클릭수 트랜드 | 시간+요일 별 클릭수 트랜드 | 시간+요일 별 클릭수 히트맵</span></div><div style="clear:both;"></div></p>
+<p>　이 포스팅을 작성하고 있는 지금까지 약 19,000여 개의 포스팅을 수집하고 발행하였는데 그중에서 가장 인기 있었던 포스팅 TOP 30 은 다음과 같다. 아무래도 단체 블로그의 포스팅을 메일 상단에 위치하고 노란색으로 테두리를 표시해서인지 대부분의 글들이 단체 블로그의 포스팅인 것을 알 수 있다.</p>
+<ul>
+<li><a href="http://woowabros.github.io/techcourse/2019/12/05/techcourse-openrecruitingday.html" target="_blank" rel="noopener">이 회사, 이 세상 쿨함이 아니다</a></li>
+<li><a href="http://woowabros.github.io/experience/2019/11/12/bravo-baemin.html" target="_blank" rel="noopener">대놓고 자랑하는 글</a></li>
+<li><a href="https://engineering.linecorp.com/ko/blog/2020-line-sw-developer-recruit-coding-test/" target="_blank" rel="noopener">LINE 신입 SW 개발자 코딩 테스트, 이렇게 만들어졌습니다</a></li>
+<li><a href="https://woowabros.github.io/techcourse/2020/06/24/techcourse-level2-retrospection.html" target="_blank" rel="noopener">우테코에서 찾은 나만의 효과적인 공부법</a></li>
+<li><a href="https://engineering.linecorp.com/ko/blog/things-i-prepared-to-be-a-line-server-developer/" target="_blank" rel="noopener">LINE 서버 개발자가 되기까지 내가 준비한 것들</a></li>
+<li><a href="http://blog.weirdx.io/post/61620" target="_blank" rel="noopener">연봉을 높이는 가장 쉬운 방법은?</a></li>
+<li><a href="http://1ilsang.blog.me/221984558663" target="_blank" rel="noopener">학교에서 알려주지 않는 17가지 실무 개발 기술 리뷰</a></li>
+<li><a href="https://woowabros.github.io/experience/2020/05/14/anomaly_alarm.html" target="_blank" rel="noopener">간단하게 만드는 이상한 알람</a></li>
+<li><a href="https://woowabros.github.io/experience/2020/05/13/birth-of-team-culture.html" target="_blank" rel="noopener">팀 문화의 탄생</a></li>
+<li><a href="https://engineering.linecorp.com/ko/blog/how-liners-keep-productive-while-working-at-home/" target="_blank" rel="noopener">LINE에서 전 직원이 재택 근무하면서 생산성을 유지하는 방법</a></li>
+<li><a href="https://engineering.linecorp.com/ko/blog/flutter-pros-and-cons/" target="_blank" rel="noopener">Flutter, 왜 선택하지 못했나</a></li>
+<li><a href="https://tech.peoplefund.co.kr/2020/02/18/code-rather-than-comment.html" target="_blank" rel="noopener">주석 달 시간에 프로그래밍을 제대로 하기</a></li>
+<li><a href="https://woowabros.github.io/techcourse/2020/04/10/techcourse-level1.html" target="_blank" rel="noopener">우아한테크코스 : 새로운 시작</a></li>
+<li><a href="http://blog.weirdx.io/post/62410" target="_blank" rel="noopener">기획자는 필요없다.</a></li>
+<li><a href="http://d2.naver.com/helloworld/2564557" target="_blank" rel="noopener">간단하게 구축해 보는 JavaScript 개발 환경</a></li>
+<li><a href="http://woowabros.github.io/woowabros/2019/09/04/techcourse-level2-retrospection.html" target="_blank" rel="noopener">우아한테크코스 : 나만의 항로 찾기</a></li>
+<li><a href="https://woowabros.github.io/techcourse/2020/06/05/techcourse-javable.html" target="_blank" rel="noopener">코드리뷰 모음 서비스를 소개합니다.</a></li>
+<li><a href="https://d2.naver.com/news/4699566" target="_blank" rel="noopener">NAVER Tech Talk: Android 밋업(2018년 11월, 2019년 11월)</a></li>
+<li><a href="https://d2.naver.com/helloworld/4007447" target="_blank" rel="noopener">2019년과 이후 JavaScript의 동향 - JavaScript(ECMAScript)</a></li>
+<li><a href="http://engineering.vcnc.co.kr/2020/01/introduce-tada-web-frontend/" target="_blank" rel="noopener">타다 웹 프론트엔드의 모든 것</a></li>
+<li><a href="https://tech.peoplefund.co.kr/2020/02/20/development-and-office-culture.html" target="_blank" rel="noopener">개발 문화, 사무실 문화</a></li>
+<li><a href="https://taetaetae.github.io/2020/06/28/a-good-developer-in-terms-of-self-development/">그런 개발자로 괜찮은가 - <code>자기개발</code> 편</a></li>
+<li><a href="http://woowabros.github.io/tools/2019/10/02/clean-architecture-experience.html" target="_blank" rel="noopener">주니어 개발자의 클린 아키텍처 맛보기</a></li>
+<li><a href="https://woowabros.github.io/experience/2020/06/19/chat-app.html" target="_blank" rel="noopener">우리도 채팅있으면 좋을 것 같아요.</a></li>
+<li><a href="https://engineering.linecorp.com/ko/blog/code-readability-vol1/" target="_blank" rel="noopener">코드 가독성에 대해 – 1. 도입과 원칙</a></li>
+<li><a href="http://woowabros.github.io/experience/2019/12/19/ruby_database.html" target="_blank" rel="noopener">메인 데이터베이스 IDC 탈출 성공기</a></li>
+<li><a href="https://engineering.linecorp.com/ko/blog/code-readability-vol3/" target="_blank" rel="noopener">코드 가독성에 대해 – 3. 상태와 절차</a></li>
+<li><a href="https://taetaetae.github.io/2020/06/21/a-good-developer-in-terms-of-culture/">그런 개발자로 괜찮은가 - <code>문화</code> 편</a></li>
+<li><a href="https://www.imaso.co.kr/archives/5297" target="_blank" rel="noopener">[2019. 9. 3] 카페24 개발자 세미나</a></li>
+<li><a href="https://jybaek.tistory.com/854" target="_blank" rel="noopener">진짜 카카오 티스토리 서비스 개판이다</a></li>
+</ul>
+<p>그렇다면 수익은 얼마나 있었을까? 음?! 이 서비스의 수익이 있다고?? 우선 아래 차트를 보자.</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="billing.jpg" title="y축이 거꾸로. 그렇다. 가슴시린 차트. 수익은 당연히 마이너스." data-caption="y축이 거꾸로. 그렇다. 가슴시린 차트. 수익은 당연히 마이너스." data-fancybox="default"><img class="fig-img" src="billing.jpg" alt="y축이 거꾸로. 그렇다. 가슴시린 차트. 수익은 당연히 마이너스."><span class="image-caption">y축이 거꾸로. 그렇다. 가슴시린 차트. 수익은 당연히 마이너스.</span></a><span class="caption">y축이 거꾸로. 그렇다. 가슴시린 차트. 수익은 당연히 마이너스.</span></div><div style="clear:both;"></div>
+<p>　최초 무료 도메인을 받아서 사용했지만 메일 발송 시 스팸으로 발송되는 등 여러 가지 이슈들 때문에 어쩔 수 없이 도메인을 구입하게 된다. (년 단위 결제) 거기에 AWS 프리 티어도 기간이 만료되어 사용하는 만큼 비용이 발생하고. ( Route53(트래픽), EC2(서버 운영), SES(메일 발송) ) 월평균 5만 원 내외를 AWS에 지불하며 서비스를 운영하고 있다. (2년 동안 서버 운영비만 벌써 약 42만원…ㅠㅠ) 후원 버튼을 달아놓았지만 전혀 효과가 없어 아쉬울 따름이다…</p>
+<h3 id="토이프로젝트가-내게-준것들"><a href="#토이프로젝트가-내게-준것들" class="headerlink" title="# 토이프로젝트가 내게 준것들"></a># 토이프로젝트가 내게 준것들</h3><p>　토이 프로젝트를 2년 동안 진행하며 진행하기 전과 후를 비교했을 때 가장 좋았던 점은 실무에서도 찾기 어려운 ‘책임감’과 ‘또 다른 지식’을 자연스럽게 얻을 수 있었다는 점이다. (지금은 안정화되어 그렇진 않지만) 매일 오전 9시 50분이 되면 항상 긴장상태로 메일 앱을 키고 기다린다. 내가 만든 서비스에서 메일이 안 오기라도 하면 바로 서버에 들어가 에러 원인을 찾고, 밤새 원인을 찾아 헤매다, 복구하고 다시 또 반복. 지금 생각하면 너무 힘들었던, 포기하고 싶었던 순간들이지만 그 시절이 필자에게는 무엇보다도 소중하고 값진 경험들로 가득 채워질 수 있었음에 감사함을 느낀다.<br>　실무에서는 java로 웹서비스를 개발하다 보니 다른 언어를 배울 기회가 없었는데 이 토이 프로젝트를 하면서 처음으로 파이썬이라는 것을 알게 되었고, 물리 장비(혹은 VM) 위에서 운영되는 정통적인 웹서비스만 운영하다 이 기회를 통해 AWS를 접해볼 수 있었고, 사용자가 하나둘 늘어남에 따라 제한적인 자원 내에서 효율적인 성능을 내기 위한 고민을 하게 되고. 실무에서 배우지 못한 값진 경험들을 할 수 있어서 너무 좋았다.</p>
+<h3 id="마치며"><a href="#마치며" class="headerlink" title="# 마치며"></a># 마치며</h3><p>　핑계지만 서비스를 좀 더 디벨롭 해야 하는데 못하고 있다. 회사 바쁜 일만 어느 정도 끝나면 처음부터 다시 설계하여 보다 안정적인 서비스를 만들어 보고 싶다. 나아가 지금은 ‘돈 잃는’ 서비스를 운영 중인데 비즈니스 모델을 고민해서 ‘돈 버는’ 서비스로 바꿀 수 있을지… 가 가장 고민 포인트다. 조언이나 제안은 언제든지 환영이다.</p>
+
+            
+
+        </div>
+    </div>
+    <style>.bmc-button img{width: 27px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{line-height: 36px !important;height:37px !important;text-decoration: none !important;display:inline-flex !important;color:#000000 !important;background-color:#FFDD00 !important;border-radius: 3px !important;border: 1px solid transparent !important;padding: 1px 9px !important;font-size: 22px !important;letter-spacing: 0.6px !important;box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;margin: 0 auto !important;font-family:'Cookie', cursive !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;-o-transition: 0.3s all linear !important;-webkit-transition: 0.3s all linear !important;-moz-transition: 0.3s all linear !important;-ms-transition: 0.3s all linear !important;transition: 0.3s all linear !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#000000 !important;}</style><link href="https://fonts.googleapis.com/css?family=Cookie" rel="stylesheet"><center><br><a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/taetaetae"><img src="https://www.buymeacoffee.com/assets/img/BMC-btn-logo.svg" alt="Buy me a coffee"><span style="margin-left:5px">Buy me a coffee</span></a>
+    <a href="https://bit.ly/ddbSupport" target="_blank"><img src="https://i.imgur.com/peaYpjh.png" style="height: 28px;"></a>
+    </center>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- blog -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5788330009690816"
+     data-ad-slot="9180895229"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2020/06/28/a-good-developer-in-terms-of-self-development/" data-tooltip="그런 개발자로 괜찮은가 - &#39;자기계발&#39; 편" aria-label="NEXT: 그런 개발자로 괜찮은가 - &#39;자기계발&#39; 편">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                
+        <!--  utteranc comment -->
+        
+        <script src="https://utteranc.es/client.js"
+                repo="taetaetae/blog-comment"
+                issue-term="pathname"
+                label="Comment"
+                theme="github-light"
+                crossorigin="anonymous"
+                async>
+        </script>
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2020 taetaetae. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2020/06/28/a-good-developer-in-terms-of-self-development/" data-tooltip="그런 개발자로 괜찮은가 - &#39;자기계발&#39; 편" aria-label="NEXT: 그런 개발자로 괜찮은가 - &#39;자기계발&#39; 편">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Share this post">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/" title="Share on Facebook">
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/" title="Share on Twitter">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/" title="Share on Google+">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+    <i id="btn-close-shareoptions" class="fa fa-times"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/">
+                    <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/">
+                    <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2020/07/12/toy-projects-second-year-review/">
+                    <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/profile.jpg" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">taetaetae</h4>
+        
+            <div id="about-card-bio"><p>Programmer</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Naver Corp.</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker"></i>
+                <br/>
+                korea
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover_2.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+
+
+
+    </body>
+</html>
