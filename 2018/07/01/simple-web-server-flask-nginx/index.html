@@ -13,12 +13,12 @@
     
         <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"지난포스팅에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도  Apache + Flask 조합보다 Nginx + Flask 조합이 더 많고 지난 포스팅에서도 알수있었듯이 (Apache VS Nginx) 둘중 어느것이 좋다고 할수도 없고 각 상황에서 연동하는 방법을 알고 있다면 이 또한 나만의 무기가 될것같아 Nginx를 연동하는 방법을 정리해보려 한다.\n1부에서 왜 Flask인가, Flask의 장점에 대해 정리를 했으니 이번 포스팅에서는 별도로 작성하진 않는다.\n# Nginx 설치 ( https://nginx.org/en/ )역시 소스설치를 한다.123456789101112- 다운을 받고$ https://nginx.org/download/nginx-1.14.0.tar.gz- 압축을 푼 다음$ tar -zxvf nginx-1.14.0.tar.gz- 폴더로 이동해서 $ cd nginx-1.14.0- 설치할 디렉토리를 설정하고$ ./configure --prefix=/~~~/apps/nginx- make 파일을 만들고$ make- 설치를 진행한다.$ make install\n이렇게 하면 일단 Nginx는 설치가 되었다.\n# uWSGI 설치 ( https://uwsgi-docs.readthedocs.io/ )앞서 Apache와 연동할때는 별도의 모듈을 Apache에게 등록하는 형태였다면 Nginx는 WSGI프로토콜을 활용하는 WSGI 어플리케이션을 실행하는 어플리케이션 서버를 활용해야 한다.12345678- 다운을 받고$ wget https://projects.unbit.it/downloads/uwsgi-latest.tar.gz- 압축을 풀고$ tar zxvf uwsgi-latest.tar.gz- 폴더로 이동하여$ cd uwsgi-2.0.17- make 명령어를 호출하면 &apos;uwsgi&apos;이라는 실행파일이 생성된다.$ make\n# Nginx 설정Apache와 비슷하게 uWSGI 관련 설정을 해준다.123456789server &#123;  listen       80;  server_name  localhost;  location / &#123; # ( / ) 경로로 들어올 경우    include uwsgi_params; # GET/POST 등 기본적으로 필요한 환경변수를 include 해준다.    uwsgi_pass 127.0.0.1:3031; # 요청을 IP:PORT로 전달한다.  &#125;&#125;\n별도의 모듈을 사용하지 않기때문에 전달해주는 (proxy느낌) 설정을 해준다.\n# uWSGI 실행 및 Nginx 재시작앞서 설치한 uwsgi를 아래처럼 IP:port 를 명시적으로 적어주고 (위에서 전달받은 IP:PORT와 동일하게) Apache 연동시 활용했던 wsgi파일을 이번에도 동일하게 사용하도록 해서 실행한다.1$ ./uwsgi -s 127.0.0.1:3031 --wsgi-file /~~~/python_app/hello_world.wsgi\n이렇게 하면 background로 실행되는게 아닌 foreground로 실행되기 때문에 &amp;을 사용한다던지 해서 background로 실행되도록 해준다. 그후 Nginx를 재시작 해주면 원하는 그토록 원했던 Hello World!를 만날수가 있게 된다.\nApache연동과 조금 다른점은 모듈을 사용하지않고 별도의 전달 어플리케이션(?)이 필요하다는점이다. 간단히 Apache처럼 모듈만 넣으면 되는게 아니라서 불편할수도 있을것 같지만 한편으로는 관리할수있는 포인트가 더 늘어난 셈이라 어떤 측면에서는 활용할수 있는 방법이 하나 늘어난것으로 볼수도 있다.\n# 마치며막상 정리하고 나면 아무것도 아닌데 알기 위해서 몸부림을 쳐가며 책이며 구글링을 하는 과정을 통해 점점 성장을 하는것 같다. (성장통이라고나 할까) 이렇게 단순히 Flask를 할수있다 가 아닌 웹서버를 연동할수있다. 그것도 Apache와 Nginx 두개나. 이것도 언젠간 나만의 무기가 되지 않을까?\n","dateCreated":"2018-07-01T02:00:00+09:00","dateModified":"2020-04-23T13:41:36+09:00","datePublished":"2018-07-01T02:00:00+09:00","description":"지난포스팅에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도","headline":"초간단 API서버 만들기 - 2부 (Python + Flask + Nginx)","image":["flask-apache-nginx.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/","keywords":"apache, nginx, web server, flask","thumbnailUrl":"flask-apache-nginx.png"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg"},"articleBody":"지난포스팅에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도  Apache + Flask 조합보다 Nginx + Flask 조합이 더 많고 지난 포스팅에서도 알수있었듯이 (Apache VS Nginx) 둘중 어느것이 좋다고 할수도 없고 각 상황에서 연동하는 방법을 알고 있다면 이 또한 나만의 무기가 될것같아 Nginx를 연동하는 방법을 정리해보려 한다.\n1부에서 왜 Flask인가, Flask의 장점에 대해 정리를 했으니 이번 포스팅에서는 별도로 작성하진 않는다.\n# Nginx 설치 ( https://nginx.org/en/ )역시 소스설치를 한다.123456789101112- 다운을 받고$ https://nginx.org/download/nginx-1.14.0.tar.gz- 압축을 푼 다음$ tar -zxvf nginx-1.14.0.tar.gz- 폴더로 이동해서 $ cd nginx-1.14.0- 설치할 디렉토리를 설정하고$ ./configure --prefix=/~~~/apps/nginx- make 파일을 만들고$ make- 설치를 진행한다.$ make install\n이렇게 하면 일단 Nginx는 설치가 되었다.\n# uWSGI 설치 ( https://uwsgi-docs.readthedocs.io/ )앞서 Apache와 연동할때는 별도의 모듈을 Apache에게 등록하는 형태였다면 Nginx는 WSGI프로토콜을 활용하는 WSGI 어플리케이션을 실행하는 어플리케이션 서버를 활용해야 한다.12345678- 다운을 받고$ wget https://projects.unbit.it/downloads/uwsgi-latest.tar.gz- 압축을 풀고$ tar zxvf uwsgi-latest.tar.gz- 폴더로 이동하여$ cd uwsgi-2.0.17- make 명령어를 호출하면 &apos;uwsgi&apos;이라는 실행파일이 생성된다.$ make\n# Nginx 설정Apache와 비슷하게 uWSGI 관련 설정을 해준다.123456789server &#123;  listen       80;  server_name  localhost;  location / &#123; # ( / ) 경로로 들어올 경우    include uwsgi_params; # GET/POST 등 기본적으로 필요한 환경변수를 include 해준다.    uwsgi_pass 127.0.0.1:3031; # 요청을 IP:PORT로 전달한다.  &#125;&#125;\n별도의 모듈을 사용하지 않기때문에 전달해주는 (proxy느낌) 설정을 해준다.\n# uWSGI 실행 및 Nginx 재시작앞서 설치한 uwsgi를 아래처럼 IP:port 를 명시적으로 적어주고 (위에서 전달받은 IP:PORT와 동일하게) Apache 연동시 활용했던 wsgi파일을 이번에도 동일하게 사용하도록 해서 실행한다.1$ ./uwsgi -s 127.0.0.1:3031 --wsgi-file /~~~/python_app/hello_world.wsgi\n이렇게 하면 background로 실행되는게 아닌 foreground로 실행되기 때문에 &amp;을 사용한다던지 해서 background로 실행되도록 해준다. 그후 Nginx를 재시작 해주면 원하는 그토록 원했던 Hello World!를 만날수가 있게 된다.\nApache연동과 조금 다른점은 모듈을 사용하지않고 별도의 전달 어플리케이션(?)이 필요하다는점이다. 간단히 Apache처럼 모듈만 넣으면 되는게 아니라서 불편할수도 있을것 같지만 한편으로는 관리할수있는 포인트가 더 늘어난 셈이라 어떤 측면에서는 활용할수 있는 방법이 하나 늘어난것으로 볼수도 있다.\n# 마치며막상 정리하고 나면 아무것도 아닌데 알기 위해서 몸부림을 쳐가며 책이며 구글링을 하는 과정을 통해 점점 성장을 하는것 같다. (성장통이라고나 할까) 이렇게 단순히 Flask를 할수있다 가 아닌 웹서버를 연동할수있다. 그것도 Apache와 Nginx 두개나. 이것도 언젠간 나만의 무기가 되지 않을까?\n","dateCreated":"2018-07-01T02:00:00+09:00","dateModified":"2020-04-23T13:41:36+09:00","datePublished":"2018-07-01T02:00:00+09:00","description":"지난포스팅에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도","headline":"초간단 API서버 만들기 - 2부 (Python + Flask + Nginx)","image":["flask-apache-nginx.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/"},"publisher":{"@type":"Organization","name":"taetaetae","sameAs":["https://facebook.com/taetaetae0","https://www.linkedin.com/in/태관-권-517825129/","mailto:taetaetae_@naver.com"],"image":"profile.jpg","logo":{"@type":"ImageObject","url":"profile.jpg"}},"url":"https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/","keywords":"apache, nginx, web server, flask","thumbnailUrl":"flask-apache-nginx.png"}</script>
     <meta name="description" content="지난포스팅에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도">
 <meta name="keywords" content="apache,nginx,web server,flask">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="초간단 API서버 만들기 - 2부 (Python + Flask + Nginx)">
-<meta property="og:url" content="https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/index.html">
+<meta property="og:url" content="https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/index.html">
 <meta property="og:site_name" content="꿈꾸는 태태태의 공간">
 <meta property="og:description" content="지난포스팅에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도">
 <meta property="og:locale" content="en">
@@ -26,19 +26,19 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="초간단 API서버 만들기 - 2부 (Python + Flask + Nginx)">
 <meta name="twitter:description" content="지난포스팅에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도">
-<meta name="twitter:image" content="https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/flask-apache-nginx.png">
+<meta name="twitter:image" content="https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/flask-apache-nginx.png">
     
     
         
     
     
     
-        <meta property="og:image" content="https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/flask-apache-nginx.png"/>
-        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/flask-apache-nginx.png" />
+        <meta property="og:image" content="https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/flask-apache-nginx.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/flask-apache-nginx.png" />
     
     
     
-        <meta property="og:image" content="https://taetaetae.github.io/assets/images/profile.jpg"/>
+        <meta property="og:image" content="https://taetaetae1.github.io/assets/images/profile.jpg"/>
     
 
     <!--STYLES-->
@@ -294,7 +294,7 @@
     
     <div class="post-content markdown">
         <div class="main-content-wrap">
-            <p><a href="https://taetaetae.github.io/2018/07/01/simple-web-server-flask-apache/">지난포스팅</a>에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도 <a id="more"></a> Apache + Flask 조합보다 Nginx + Flask 조합이 더 많고 지난 포스팅에서도 알수있었듯이 (<a href="https://taetaetae.github.io/2018/06/27/apache-vs-nginx/">Apache VS Nginx</a>) 둘중 어느것이 좋다고 할수도 없고 각 상황에서 연동하는 방법을 알고 있다면 이 또한 나만의 무기가 될것같아 Nginx를 연동하는 방법을 정리해보려 한다.<br><div class="figure center" style="width:;"><img class="fig-img" src="flask-apache-nginx.png" alt=""></div></p>
+            <p><a href="https://taetaetae.github.io/2018/07/01/simple-web-server-flask-apache/" target="_blank" rel="noopener">지난포스팅</a>에 이어 이번엔 Flask와 Nginx를 연동하는 방법을 정리해보고자 한다. Apache로 연동했는데 왜 또 Nginx로 연동하는걸 정리하지(?)하며 의문이 들수 있는데 다른 포스팅을 봐도 <a id="more"></a> Apache + Flask 조합보다 Nginx + Flask 조합이 더 많고 지난 포스팅에서도 알수있었듯이 (<a href="https://taetaetae.github.io/2018/06/27/apache-vs-nginx/" target="_blank" rel="noopener">Apache VS Nginx</a>) 둘중 어느것이 좋다고 할수도 없고 각 상황에서 연동하는 방법을 알고 있다면 이 또한 나만의 무기가 될것같아 Nginx를 연동하는 방법을 정리해보려 한다.<br><div class="figure center" style="width:;"><img class="fig-img" src="flask-apache-nginx.png" alt=""></div></p>
 <p>1부에서 왜 Flask인가, Flask의 장점에 대해 정리를 했으니 이번 포스팅에서는 별도로 작성하진 않는다.</p>
 <h3 id="Nginx-설치-https-nginx-org-en"><a href="#Nginx-설치-https-nginx-org-en" class="headerlink" title="# Nginx 설치 ( https://nginx.org/en/ )"></a># Nginx 설치 ( <a href="https://nginx.org/en/" target="_blank" rel="noopener">https://nginx.org/en/</a> )</h3><p>역시 소스설치를 한다.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">- 다운을 받고</span><br><span class="line">$ https://nginx.org/download/nginx-1.14.0.tar.gz</span><br><span class="line">- 압축을 푼 다음</span><br><span class="line">$ tar -zxvf nginx-1.14.0.tar.gz</span><br><span class="line">- 폴더로 이동해서 </span><br><span class="line">$ cd nginx-1.14.0</span><br><span class="line">- 설치할 디렉토리를 설정하고</span><br><span class="line">$ ./configure --prefix=/~~~/apps/nginx</span><br><span class="line">- make 파일을 만들고</span><br><span class="line">$ make</span><br><span class="line">- 설치를 진행한다.</span><br><span class="line">$ make install</span><br></pre></td></tr></table></figure></p>
 <p>이렇게 하면 일단 Nginx는 설치가 되었다.</p>
@@ -366,7 +366,7 @@
             
             
             <li class="post-action hide-xs">
-                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Facebook">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Facebook">
                     <i class="fab fa-facebook" aria-hidden="true"></i>
                 </a>
             </li>
@@ -374,7 +374,7 @@
             
             
             <li class="post-action hide-xs">
-                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Twitter">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Twitter">
                     <i class="fab fa-twitter" aria-hidden="true"></i>
                 </a>
             </li>
@@ -382,7 +382,7 @@
             
             
             <li class="post-action hide-xs">
-                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Google+">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Google+">
                     <i class="fab fa-google-plus" aria-hidden="true"></i>
                 </a>
             </li>
@@ -460,7 +460,7 @@
             
             
             <li class="post-action hide-xs">
-                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Facebook">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Facebook">
                     <i class="fab fa-facebook" aria-hidden="true"></i>
                 </a>
             </li>
@@ -468,7 +468,7 @@
             
             
             <li class="post-action hide-xs">
-                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Twitter">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Twitter">
                     <i class="fab fa-twitter" aria-hidden="true"></i>
                 </a>
             </li>
@@ -476,7 +476,7 @@
             
             
             <li class="post-action hide-xs">
-                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Google+">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/" title="Share on Google+">
                     <i class="fab fa-google-plus" aria-hidden="true"></i>
                 </a>
             </li>
@@ -503,7 +503,7 @@
             
             
             <li class="share-option">
-                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/">
                     <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
                 </a>
             </li>
@@ -511,7 +511,7 @@
             
             
             <li class="share-option">
-                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/">
                     <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
                 </a>
             </li>
@@ -519,7 +519,7 @@
             
             
             <li class="share-option">
-                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae.github.io/2018/07/01/simple-web-server-flask-nginx/">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https://taetaetae1.github.io/2018/07/01/simple-web-server-flask-nginx/">
                     <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
                 </a>
             </li>
